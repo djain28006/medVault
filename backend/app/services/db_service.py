@@ -12,6 +12,39 @@ class DBService:
         user_id = user_data.get("uid")
         db.collection('users').document(user_id).set(user_data, merge=True)
 
+    def update_user_profile(self, user_id: str, updates: dict):
+        if not db: return
+        db.collection('users').document(user_id).set(updates, merge=True)
+
+    def get_user_by_phone(self, phone_number: str) -> dict | None:
+        if not db: return None
+        # Clean phone number for consistency
+        phone = phone_number.strip().replace(" ", "")
+        docs = db.collection('users').where('phoneNumber', '==', phone).limit(1).get()
+        return docs[0].to_dict() if docs else None
+
+    def get_user_by_email(self, email: str) -> dict | None:
+        if not db: return None
+        email_clean = email.strip().lower()
+        docs = db.collection('users').where('email', '==', email_clean).limit(1).get()
+        return docs[0].to_dict() if docs else None
+
+    def get_user_profile(self, user_id: str) -> dict | None:
+        if not db: return None
+        doc = db.collection('users').document(user_id).get()
+        if not doc.exists: return None
+        data = doc.to_dict()
+        # Ensure critical info fields exist for emergency
+        return {
+            "uid": user_id,
+            "email": data.get("email"),
+            "bloodType": data.get("bloodType", "Unknown"),
+            "allergies": data.get("allergies", []),
+            "chronicConditions": data.get("chronicConditions", []),
+            "emergencyContacts": data.get("emergencyContacts", []),
+            "displayName": data.get("displayName", "Patient")
+        }
+
     def save_report(self, report_data: dict):
         if not db: return
         report_id = report_data.get('reportId')
@@ -34,6 +67,18 @@ class DBService:
         if not db: return []
         docs = db.collection('access_grants').where('doctorId', '==', doctor_id)\
                                              .where('patientId', '==', patient_id)\
+                                             .where('status', '==', 'active').stream()
+        return [doc.to_dict() for doc in docs]
+
+    def get_doctor_grants(self, doctor_id: str) -> list:
+        if not db: return []
+        docs = db.collection('access_grants').where('doctorId', '==', doctor_id)\
+                                             .where('status', '==', 'active').stream()
+        return [doc.to_dict() for doc in docs]
+
+    def get_patient_grants(self, patient_id: str) -> list:
+        if not db: return []
+        docs = db.collection('access_grants').where('patientId', '==', patient_id)\
                                              .where('status', '==', 'active').stream()
         return [doc.to_dict() for doc in docs]
 

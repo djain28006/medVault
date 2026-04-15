@@ -7,7 +7,9 @@ class ReportUploadResponse(BaseModel):
 
 class AccessRequestReq(BaseModel):
     doctorId: str
-    patientId: str
+    patientId: Optional[str] = None
+    phoneNumber: Optional[str] = None
+    email: Optional[str] = None
 
 class AccessRequestRes(BaseModel):
     message: str
@@ -33,6 +35,17 @@ class HealthScoreResponse(BaseModel):
     score: int
     category: str
     factors: List[str]
+
+class EmergencyContact(BaseModel):
+    name: str
+    relation: str
+    phone: str
+
+class UserRegisterReq(BaseModel):
+    role: str
+    email: Optional[str] = None
+    bloodType: Optional[str] = "Unknown"
+    emergencyContacts: Optional[List[EmergencyContact]] = []
 
 class EmergencyQRRequest(BaseModel):
     patientId: str

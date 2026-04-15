@@ -10,6 +10,7 @@ load_dotenv(env_path, override=True)
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional, List, Any
 from pydantic import BaseModel
 from .routes import patient, doctor, emergency
 from .dependencies import get_current_user
@@ -24,8 +25,8 @@ app = FastAPI(title="Healthcare API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -54,16 +55,25 @@ def test_email(email: str = "danishsjain@gmail.com"):
 
 
 
+
+
 class RegisterRequest(BaseModel):
     role: str = "patient"
+    email: Optional[str] = None
+    bloodType: Optional[str] = "Unknown"
+    emergencyContacts: Optional[List[dict]] = []
 
 @app.post("/api/auth/register")
 def register_user(req: RegisterRequest, current_user: dict = Depends(get_current_user)):
-    """Register a new user doc in Firestore with their role (called after Firebase Auth signup)."""
+    """Register a new user doc in Firestore with their role and emergency data."""
+    final_email = req.email or current_user.get("email", "")
+    
     user_data = {
         "uid": current_user["uid"],
-        "email": current_user.get("email", ""),
+        "email": final_email,
         "role": req.role,
+        "bloodType": req.bloodType,
+        "emergencyContacts": req.emergencyContacts
     }
     db_service.save_user(user_data)
     return {"message": "User registered", "user": user_data}

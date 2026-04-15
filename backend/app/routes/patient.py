@@ -107,3 +107,29 @@ def get_vitals(patientId: str):
     """Returns the most recent vitals extracted from uploaded reports."""
     vitals = db_service.get_latest_vitals(patient_id=patientId, limit=20)
     return {"vitals": vitals}
+
+@router.post("/update-profile")
+def update_profile(patientId: str, updates: dict):
+    try:
+        db_service.update_user_profile(patientId, updates)
+        return {"message": "Profile updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/get-profile/{patientId}")
+def get_profile(patientId: str):
+    try:
+        profile = db_service.get_user(patientId)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        return profile
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/my-grants/{patientId}")
+def my_grants(patientId: str):
+    try:
+        grants = db_service.get_patient_grants(patientId)
+        return {"grants": grants}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

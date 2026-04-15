@@ -45,14 +45,19 @@ export const AuthProvider = ({ children }) => {
     return credential;
   };
 
-  const signup = async (email, password, role = 'patient') => {
+  const signup = async (email, password, role = 'patient', profileData = {}) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     const user = credential.user;
     
     // Create user document in Firestore via backend
     try {
       const token = await user.getIdToken();
-      await apiClient.post('/api/auth/register', { role }, {
+      await apiClient.post('/api/auth/register', { 
+        role, 
+        email,
+        bloodType: profileData.bloodType || "Unknown",
+        emergencyContacts: profileData.emergencyContacts || []
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (e) {

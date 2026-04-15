@@ -67,7 +67,14 @@ export const api = {
   triggerAdherenceAlert: (patientId, missedMeds) =>
     apiClient.post('/api/patient/trigger-adherence-alert', { patientId, missedMeds }),
 
+  updateProfile: (patientId, updates) =>
+    apiClient.post(`/api/patient/update-profile?patientId=${patientId}`, updates),
 
+  getProfile: (patientId) =>
+    apiClient.get(`/api/patient/get-profile/${patientId}`),
+
+  getMyGrants: (patientId) =>
+    apiClient.get(`/api/patient/my-grants/${patientId}`),
 
   // Doctor endpoints
   requestAccess: (data) =>
@@ -91,6 +98,9 @@ export const api = {
 
   getCriticalInfo: (patientId) =>
     apiClient.get(`/api/emergency/critical-info/${patientId}`),
+
+  register: (role = 'patient', email = null) =>
+    apiClient.post('/api/auth/register', { role, email }),
 };
 
 export { apiClient };

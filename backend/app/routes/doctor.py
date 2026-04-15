@@ -10,7 +10,7 @@ service = AgentService()
 @router.post("/request-access", response_model=AccessRequestRes)
 def request_access(req: AccessRequestReq):
     try:
-        res = service.request_doctor_access(req.doctorId, req.patientId)
+        res = service.request_doctor_access(req.doctorId, patient_id=req.patientId, phone_number=req.phoneNumber, email=req.email)
         return {"message": "Access requested", "request": res}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -39,6 +39,22 @@ def create_prescription(req: PrescriptionCreateReq):
 
 @router.get("/my-patients/{doctorId}")
 def my_patients(doctorId: str):
-    # This should dynamically fetch from db_service where Doctor has active grants
-    # Simplified placeholder
-    return {"patients": []}
+    try:
+        grants = db_service.get_doctor_grants(doctorId)
+        # Extract unique patient IDs
+        patient_ids = list(set([g['patientId'] for g in grants]))
+        
+        # Enrich with patient profiles
+        patients = []
+        for pid in patient_ids:
+            profile = db_service.get_user(pid)
+            if profile:
+                patients.append({
+                    "id": pid,
+                    "name": profile.get("displayName", "Unnamed Patient"),
+                    "age": 0, # Could be derived if added to profile
+                    "condition": "Active Monitoring" # Placeholder for condition
+                })
+        return {"patients": patients}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

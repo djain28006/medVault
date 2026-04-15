@@ -9,7 +9,12 @@ from agents.prescription_agent import PrescriptionAgent
 from agents.emergency_agent import EmergencyAgent
 
 from app.services.db_service import db_service
+from app.services.pdf_service import pdf_service
+from app.services.mail_service import mail_service
 from app.firebase_config import bucket
+import random
+import string
+
 
 class AgentService:
     def __init__(self):
@@ -81,11 +86,46 @@ class AgentService:
         # In a real scenario, we fetch reports from db_service here and pass to agent
         return self.alert_agent.calculate_health_score(patient_id)
 
-    def request_doctor_access(self, doctor_id: str, patient_id: str) -> dict:
-        req = self.doctor_access_agent.request_access(doctor_id, patient_id)
-        # Store mock OTP in firestore doc for verification
-        req["mock_otp"] = "123456" 
+    def request_doctor_access(self, doctor_id: str, patient_id: str = None, phone_number: str = None, email: str = None) -> dict:
+        target_patient_id = patient_id
+        
+        # 1. Lookup by email or phone if patient_id not provided
+        if not target_patient_id:
+            if email:
+                patient = db_service.get_user_by_email(email)
+                if not patient:
+                    raise ValueError(f"No account found for '{email}'. Please ensure the patient has logged in at least once.")
+                target_patient_id = patient.get("uid")
+            elif phone_number:
+                patient = db_service.get_user_by_phone(phone_number)
+                if not patient:
+                    raise ValueError("Patient with this phone number not found")
+                target_patient_id = patient.get("uid")
+
+        if not target_patient_id:
+            raise ValueError("Patient Email, ID, or Phone Number required")
+
+        # 2. Get patient email for OTP delivery
+        patient_profile = db_service.get_user(target_patient_id)
+        patient_email = patient_profile.get("email")
+        if not patient_email:
+             # Fallback for demo if email not in profile but in auth
+             # For hackathon, assume email exists in profile
+             raise ValueError("Patient profile has no email for OTP delivery")
+
+        # 3. Create request via agent
+        req = self.doctor_access_agent.request_access(doctor_id, target_patient_id)
+        
+        # 4. Generate random 6-digit OTP
+        otp_code = ''.join(random.choices(string.digits, k=6))
+        req["mock_otp"] = otp_code # We still use mock_otp field to store it
+        
+        # 5. Save to DB
         db_service.save_access_request(req)
+        
+        # 6. Send Email via Resend
+        mail_service.send_otp_email(patient_email, otp_code)
+        
         return req
         
     def verify_otp(self, request_id: str, otp: str) -> dict:
@@ -93,6 +133,7 @@ class AgentService:
         if not req:
             raise ValueError("Request not found in DB")
         
+        # Verify against stored mock_otp
         if otp != req.get("mock_otp", "123456"):
             raise ValueError("Invalid OTP")
         
@@ -100,9 +141,26 @@ class AgentService:
         req["status"] = "approved"
         db_service.save_access_request(req)
         
-        # Auto-grant access upon successful OTP
-        self.grant_access(req["patientId"], req["doctorId"])
-        return result
+        # Create a real access grant with expiry (7 days)
+        doctor_profile = db_service.get_user(req["doctorId"])
+        patient_profile = db_service.get_user(req["patientId"])
+        
+        doctor_name = doctor_profile.get("displayName", "Dr. Doctor") if doctor_profile else "Doctor"
+        patient_name = patient_profile.get("displayName", "Patient Name") if patient_profile else "Patient"
+
+        grant = {
+            "grantId": f"grant_{uuid.uuid4().hex[:6]}",
+            "patientId": req["patientId"],
+            "doctorId": req["doctorId"],
+            "doctorName": doctor_name,
+            "patientName": patient_name,
+            "permission": "Full Read",
+            "status": "active",
+            "createdAt": datetime.datetime.now().isoformat(),
+            "expiresAt": (datetime.datetime.now() + datetime.timedelta(days=7)).isoformat()
+        }
+        db_service.save_access_grant(grant)
+        return {"result": result, "grant": grant}
 
     def analyze_patient(self, patient_id: str) -> dict:
         # E.g., reports = db_service.get_patient_reports(patient_id)
@@ -115,7 +173,50 @@ class AgentService:
         return rx
 
     def handle_emergency(self, qr_data: str) -> dict:
+        # qr_data currently is just the patient_id (or encoded version)
+        patient_id = qr_data 
+        # In a real app, you'd decode/decrypt the qr_data token here
+        
+        # Log the emergency access
+        scan_record = {
+            "scanId": f"scan_{uuid.uuid4().hex[:6]}",
+            "patientId": patient_id,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "type": "emergency_qr_scan"
+        }
+        # db_service.save_emergency_scan(scan_record) # Optional log
+        
         return self.emergency_agent.handle_scan(qr_data)
         
     def generate_emergency_qr(self, patient_id: str) -> dict:
-        return self.emergency_agent.generate_qr(patient_id)
+        # One-click link to download PDF directly (using local IP for scanner accessibility)
+        pdf_url = f"http://192.168.1.11:8005/api/emergency/download-summary/{patient_id}"
+        return {
+            "patientId": patient_id,
+            "qrCodePayload": pdf_url,
+            "message": "Emergency QR generated for direct PDF access"
+        }
+
+    def get_emergency_critical_info(self, patient_id: str) -> dict:
+        profile = db_service.get_user_profile(patient_id) or {}
+        reports = db_service.get_patient_reports(patient_id)
+        prescriptions = db_service.get_patient_prescriptions(patient_id)
+        vitals = db_service.get_latest_vitals(patient_id, limit=5)
+        
+        return {
+            "patientId": patient_id,
+            "displayName": profile.get("displayName", "Unknown Patient"),
+            "bloodType": profile.get("bloodType", "Unknown"),
+            "allergies": profile.get("allergies", []),
+            "chronicConditions": profile.get("chronicConditions", []),
+            "emergencyContacts": profile.get("emergencyContacts", []),
+            "latestVitals": vitals,
+            "recentReportsCount": len(reports),
+            "recentPrescriptionsCount": len(prescriptions)
+        }
+
+    def get_emergency_summary_pdf(self, patient_id: str) -> bytes:
+        profile = db_service.get_user_profile(patient_id) or {"uid": patient_id}
+        reports = db_service.get_patient_reports(patient_id)
+        prescriptions = db_service.get_patient_prescriptions(patient_id)
+        return pdf_service.generate_medical_summary_pdf(profile, reports, prescriptions)

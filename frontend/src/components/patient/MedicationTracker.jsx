@@ -16,25 +16,26 @@ import { useAuth } from '../../context/AuthContext';
 import { notify } from '../shared/NotificationCenter';
 import MedicationCard from './MedicationCard';
 
-export default function MedicationTracker() {
+export default function MedicationTracker({ patientId: externalPatientId }) {
   const { currentUser } = useAuth();
+  const targetId = externalPatientId || currentUser?.uid;
   const [meds, setMeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFinalizing, setIsFinalizing] = useState(false);
 
   useEffect(() => {
-    fetchMeds();
+    if (targetId) fetchMeds();
     
     // Listen for report upload events to auto-refresh
-    const handleRefresh = () => fetchMeds();
+    const handleRefresh = () => { if (targetId) fetchMeds(); };
     window.addEventListener('refresh-meds', handleRefresh);
     return () => window.removeEventListener('refresh-meds', handleRefresh);
-  }, [currentUser]);
+  }, [targetId]);
 
   const fetchMeds = async () => {
     try {
       setLoading(true);
-      const res = await api.getMedications(currentUser.uid);
+      const res = await api.getMedications(targetId);
       setMeds(res.data.medications || []);
     } catch (err) {
       console.error('Failed to fetch meds:', err);
@@ -49,7 +50,7 @@ export default function MedicationTracker() {
       // Optimistic update
       setMeds(prev => prev.map(m => m.id === med.id ? { ...m, taken: newStatus } : m));
       
-      await api.updateMedStatus(currentUser.uid, med.medId, med.slot, newStatus);
+      await api.updateMedStatus(targetId, med.medId, med.slot, newStatus);
       
       if (newStatus) {
         notify({
@@ -83,7 +84,7 @@ export default function MedicationTracker() {
           type: 'critical'
         });
         
-        await api.triggerAdherenceAlert(currentUser.uid, missed.map(m => m.drug));
+        await api.triggerAdherenceAlert(targetId, missed.map(m => m.drug));
       } else {
         notify({
           title: 'Perfect Adherence',

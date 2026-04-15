@@ -22,9 +22,12 @@ const menuItems = [
   { id: 'analysis', label: 'Report Analysis', icon: ClipboardList },
 ];
 
+import PatientDetailView from '../components/doctor/PatientDetailView';
+
 export default function DoctorDashboard() {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'detail'
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -35,6 +38,7 @@ export default function DoctorDashboard() {
 
   const handlePatientSelect = async (patientId) => {
     setSelectedPatient(patientId);
+    setViewMode('detail');
     setLoadingSummary(true);
     try {
       const res = await api.getPatientSummary(patientId);
@@ -60,36 +64,46 @@ export default function DoctorDashboard() {
           <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                <DashboardStats stats={statCards} />
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <PatientSearch onSelect={handlePatientSelect} />
-                  {loadingSummary ? (
-                    <div className="glass-card p-6 flex items-center justify-center min-h-[300px]">
-                      <div className="flex flex-col items-center gap-3 text-slate-500">
-                        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm font-medium">Analyzing patient data...</p>
-                      </div>
+                {viewMode === 'list' ? (
+                  <>
+                    <DashboardStats stats={statCards} />
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      <PatientSearch onSelect={handlePatientSelect} />
+                      {loadingSummary ? (
+                        <div className="glass-card p-6 flex items-center justify-center min-h-[300px]">
+                          <div className="flex flex-col items-center gap-3 text-slate-500">
+                            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm font-medium">Analyzing patient data...</p>
+                          </div>
+                        </div>
+                      ) : summary ? (
+                        <div className="glass-card p-6 relative overflow-hidden">
+                          <div className="absolute -right-12 -top-12 w-40 h-40 bg-brand-500/5 rounded-full blur-3xl" />
+                          <h3 className="section-title">Clinical Summary</h3>
+                          <h4 className="text-xl font-display font-bold text-white mb-4">{summary.patientId}</h4>
+                          <p className="text-sm text-slate-300 leading-relaxed p-4 bg-white/[0.03] rounded-xl border border-white/[0.06] mb-4">{summary.summary}</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {summary.trends?.map((t, i) => <span key={i} className="badge badge-blue">{t}</span>)}
+                          </div>
+                          <button onClick={() => setViewMode('detail')} className="btn-primary mt-6 w-full">View Full Dashboard</button>
+                        </div>
+                      ) : (
+                        <div className="glass-card p-6 flex items-center justify-center text-center min-h-[300px]">
+                          <div className="text-slate-500">
+                            <Activity className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                            <p className="font-medium">Select a patient to view their clinical summary</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : summary ? (
-                    <div className="glass-card p-6 relative overflow-hidden">
-                      <div className="absolute -right-12 -top-12 w-40 h-40 bg-brand-500/5 rounded-full blur-3xl" />
-                      <h3 className="section-title">Clinical Summary</h3>
-                      <h4 className="text-xl font-display font-bold text-white mb-4">{summary.patientId}</h4>
-                      <p className="text-sm text-slate-300 leading-relaxed p-4 bg-white/[0.03] rounded-xl border border-white/[0.06] mb-4">{summary.summary}</p>
-                      <div className="flex gap-2 flex-wrap">
-                        {summary.trends?.map((t, i) => <span key={i} className="badge badge-blue">{t}</span>)}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="glass-card p-6 flex items-center justify-center text-center min-h-[300px]">
-                      <div className="text-slate-500">
-                        <Activity className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p className="font-medium">Select a patient to view their clinical summary</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <PatientTimeline />
+                    <PatientTimeline />
+                  </>
+                ) : (
+                  <PatientDetailView 
+                    patientId={selectedPatient} 
+                    onBack={() => setViewMode('list')} 
+                  />
+                )}
               </div>
             )}
 
