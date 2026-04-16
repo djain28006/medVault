@@ -2,9 +2,10 @@ import logging
 import os
 from dotenv import load_dotenv
 
-# Explicitly load .env from the backend directory with override=True
+# Load .env locally; Render/Prod uses dashboard environment variables
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-load_dotenv(env_path, override=True)
+if os.path.exists(env_path):
+    load_dotenv(env_path, override=True)
 
 
 
