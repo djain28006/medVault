@@ -52,3 +52,10 @@ class EmergencyQRRequest(BaseModel):
 
 class ScanQRReq(BaseModel):
     qrData: str
+
+class PatientNoteCreateReq(BaseModel):
+    patientId: str
+    title: str
+    content: str
+    category: Optional[str] = "observation" # allergy, medication, observation, diagnosis, follow-up, warning
+    tags: Optional[List[str]] = []

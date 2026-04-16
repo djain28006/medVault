@@ -36,7 +36,20 @@ export default function MedicationTracker({ patientId: externalPatientId }) {
     try {
       setLoading(true);
       const res = await api.getMedications(targetId);
-      setMeds(res.data.medications || []);
+      const rawMeds = res.data.medications || [];
+      
+      // Deduplicate identical meds (same name, slot, dosage)
+      const uniqueMeds = rawMeds.reduce((acc, current) => {
+        const x = acc.find(item => 
+          item.drug === current.drug && 
+          item.slot === current.slot && 
+          item.dosage === current.dosage
+        );
+        if (!x) return acc.concat([current]);
+        return acc;
+      }, []);
+      
+      setMeds(uniqueMeds);
     } catch (err) {
       console.error('Failed to fetch meds:', err);
     } finally {
@@ -112,64 +125,68 @@ export default function MedicationTracker({ patientId: externalPatientId }) {
   );
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-10 pb-10">
       {/* Header & Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="col-span-2 flex flex-col justify-between rounded-3xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-md">
-            <div className="flex items-center justify-between">
+        <div className="col-span-2 flex flex-col justify-between rounded-[2rem] border border-white/[0.08] bg-slate-900/40 p-8 backdrop-blur-xl relative overflow-hidden group">
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] group-hover:bg-emerald-500/10 transition-colors duration-700" />
+            <div className="flex items-center justify-between relative z-10">
               <div className="mb-2 flex items-center gap-2 text-emerald-400">
                 <Calendar className="h-5 w-5" />
-                <span className="text-sm font-bold uppercase tracking-widest">Daily Schedule</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Temporal Pipeline</span>
               </div>
               <button 
                 onClick={fetchMeds}
-                className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-emerald-400 transition-colors"
+                className="p-2.5 rounded-xl bg-slate-800/50 text-slate-400 hover:text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all"
                 title="Refresh Pipeline"
               >
                 <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
             </div>
-            <h2 className="text-3xl font-black text-white">Medication Pipeline</h2>
-            <p className="mt-2 text-slate-400">Automated adherence tracking synchronized with clinical records.</p>
-          </div>
-
-          <div className="mt-8 flex items-end gap-6">
-            <div className="flex-1">
-              <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-slate-500">
-                <span>Daily Adherence</span>
-                <span className="text-emerald-400">{progress}%</span>
+            <div className="relative z-10">
+              <h2 className="text-3xl font-black text-white tracking-tight">Intelligence Dosage Tracker</h2>
+              <p className="mt-2 text-sm text-slate-400 font-medium">Automated adherence tracking synchronized via clinical extraction vectors.</p>
+            </div>
+            
+            <div className="mt-8 flex items-end gap-6 relative z-10">
+              <div className="flex-1">
+                <div className="mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <span>Adherence Integrity</span>
+                  <span className="text-emerald-400">{progress}% Accuracy</span>
+                </div>
+                <div className="h-3 w-full rounded-full bg-slate-950/50 border border-white/5 p-0.5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 1, ease: "circOut" }}
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                  />
+                </div>
               </div>
-              <div className="h-3 w-full rounded-full bg-slate-800 ring-4 ring-slate-900/50">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                />
+              <div className="rounded-2xl border border-white/5 bg-slate-950/50 px-5 py-3 text-center min-w-[100px]">
+                <div className="text-2xl font-black text-white">{meds.filter(m => m.taken).length}/{meds.length}</div>
+                <div className="text-[8px] font-black uppercase text-slate-500 tracking-tighter">Verified Doses</div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-center">
-              <div className="text-2xl font-black text-white">{meds.filter(m => m.taken).length}/{meds.length}</div>
-              <div className="text-[10px] font-bold uppercase text-slate-500">Doses Taken</div>
-            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col justify-between rounded-3xl border border-rose-500/20 bg-rose-500/5 p-8 backdrop-blur-md">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500">
+        <div className="flex flex-col justify-between rounded-[2rem] border border-rose-500/20 bg-rose-500/[0.03] p-8 backdrop-blur-xl relative overflow-hidden group">
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-rose-500/5 rounded-full blur-[80px] group-hover:bg-rose-500/10 transition-colors duration-700" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 relative z-10 border border-rose-500/20 shadow-lg">
             <AlertCircle className="h-6 w-6" />
           </div>
-          <div className="mt-4">
-            <h3 className="text-xl font-bold text-white">Outreach Protocol</h3>
-            <p className="text-sm text-slate-400 leading-relaxed mt-2">
-              If dosages are missed, the Medication Agent will autonomously trigger professional clinical reminders via Resend.
+          <div className="mt-6 relative z-10">
+            <h3 className="text-xl font-black text-white tracking-tight">Outreach Protocol</h3>
+            <p className="text-[13px] text-slate-400 leading-relaxed mt-2 font-medium">
+              Autonomous clinical outreach initiated via Medication Agent if divergence is detected.
             </p>
           </div>
           <button
             onClick={handleFinalize}
             disabled={isFinalizing || meds.length === 0}
-            className="group mt-6 flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 text-sm font-black text-slate-900 transition-all hover:bg-emerald-400 disabled:opacity-50"
+            className="group mt-6 flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 text-xs font-black text-slate-900 transition-all hover:bg-emerald-400 disabled:opacity-50 relative z-10 uppercase tracking-widest"
           >
-            {isFinalizing ? 'SYNCING AGENTS...' : 'FINALIZE ADHERENCE'}
+            {isFinalizing ? 'SYNCING AGENTS...' : 'Finalize Pipeline'}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </button>
         </div>
@@ -201,10 +218,19 @@ export default function MedicationTracker({ patientId: externalPatientId }) {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pl-16">
+              <div className="grid gap-6 grid-cols-1 pl-12 relative w-full">
                 <AnimatePresence mode="popLayout">
-                  {slotMeds.map(med => (
-                    <MedicationCard key={med.id} med={med} onToggle={toggleMed} />
+                  {slotMeds.map((med, i) => (
+                    <motion.div 
+                      key={med.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                      whileHover={{ y: -3 }}
+                      className="glass-morphism rounded-2xl border border-white/[0.05] overflow-hidden"
+                    >
+                      <MedicationCard med={med} onToggle={toggleMed} />
+                    </motion.div>
                   ))}
                 </AnimatePresence>
               </div>
@@ -223,6 +249,7 @@ export default function MedicationTracker({ patientId: externalPatientId }) {
             </p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

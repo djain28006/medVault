@@ -15,8 +15,8 @@ export default function NotificationCenter() {
         ...e.detail
       };
       setNotifications(prev => [newNotif, ...prev].slice(0, 10));
-      // Auto-open if critical
-      if (e.detail.type === 'critical') setIsOpen(true);
+      // Auto-open on any new alert
+      setIsOpen(true);
     };
 
     window.addEventListener('app-notification', handleNotification);
@@ -58,7 +58,10 @@ export default function NotificationCenter() {
               <div className="flex items-center justify-between p-4 border-b border-slate-900">
                 <h3 className="text-lg font-bold text-slate-100">Clinical Alerts</h3>
                 <button 
-                  onClick={() => setNotifications([])}
+                  onClick={() => {
+                    setNotifications([]);
+                    setIsOpen(false);
+                  }}
                   className="text-xs text-slate-500 hover:text-rose-400 transition-colors"
                 >
                   Clear All

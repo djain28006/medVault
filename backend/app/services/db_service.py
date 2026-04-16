@@ -166,5 +166,22 @@ class DBService:
             status_map[m_id][slot] = data['status']
         return status_map
 
+    def save_patient_note(self, note_data: dict):
+        if not db: return
+        import uuid
+        note_id = f"note_{uuid.uuid4().hex[:8]}"
+        note_data["noteId"] = note_id
+        patient_id = note_data.get("patientId")
+        db.collection('users').document(patient_id).collection('notes').document(note_id).set(note_data)
+        return note_id
+
+    def get_patient_notes(self, patient_id: str) -> list:
+        if not db: return []
+        docs = db.collection('users').document(patient_id).collection('notes').stream()
+        notes = [doc.to_dict() for doc in docs]
+        # Sort by timestamp descending
+        notes.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        return notes
+
 db_service = DBService()
 

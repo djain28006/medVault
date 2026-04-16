@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { auth } from '../firebase/config';
 
-const API_BASE = 'http://localhost:8005';
+const origin = typeof window !== 'undefined' ? window.location.origin : '';
+const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+
+// Use localhost for local dev, and the tunnel for network/mobile access
+const API_BASE = isLocal 
+  ? 'http://localhost:8005' 
+  : 'https://lazy-banks-divide.loca.lt';
 
 
 const apiClient = axios.create({ baseURL: API_BASE });
@@ -12,6 +18,8 @@ apiClient.interceptors.request.use(async (config) => {
     const token = await auth.currentUser.getIdToken();
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Bypass Localtunnel reminder page for API calls
+  config.headers['Bypass-Tunnel-Reminder'] = 'true';
   return config;
 }, (err) => Promise.reject(err));
 
@@ -76,6 +84,9 @@ export const api = {
   getMyGrants: (patientId) =>
     apiClient.get(`/api/patient/my-grants/${patientId}`),
 
+  getPatientDoctorNotes: (patientId) =>
+    apiClient.get(`/api/patient/doctor-notes/${patientId}`),
+
   // Doctor endpoints
   requestAccess: (data) =>
     apiClient.post('/api/doctor/request-access', data),
@@ -91,6 +102,12 @@ export const api = {
 
   getMyPatients: (doctorId) =>
     apiClient.get(`/api/doctor/my-patients/${doctorId}`),
+
+  createPatientNote: (data) =>
+    apiClient.post('/api/doctor/patient-note', data),
+
+  getDoctorPatientNotes: (patientId) =>
+    apiClient.get(`/api/doctor/patient-notes/${patientId}`),
 
   // Emergency endpoints (no auth required)
   scanQR: (data) =>

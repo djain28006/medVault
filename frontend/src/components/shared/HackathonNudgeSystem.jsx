@@ -126,39 +126,6 @@ export default function HackathonNudgeSystem({ healthScore }) {
 
   return (
     <>
-      {/* Global "Agent Thinking" Log for Judges */}
-      <div className="fixed bottom-6 left-6 z-[100] w-80 pointer-events-none hidden lg:block">
-        <div className="glass p-5 rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-500/20">
-              <Activity className="h-4 w-4 text-brand-400 animate-pulse" />
-            </div>
-            <div>
-              <h5 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Autonomous Agent Logs</h5>
-              <p className="text-[8px] text-slate-500 font-bold uppercase tracking-tight">Real-time Clinical Monitoring</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {logs.map((log, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, x: -10 }} 
-                animate={{ opacity: 1, x: 0 }} 
-                className={`text-[9.5px] font-mono leading-tight border-l-2 pl-3 py-1 ${
-                  log.msg.includes('🚨') || log.msg.includes('⚠️') 
-                    ? 'border-rose-500 bg-rose-500/5' 
-                    : 'border-slate-800'
-                }`}
-              >
-                <div className="text-slate-600 mb-0.5 text-[8px]">{log.time}</div>
-                <span className={log.msg.includes('🚨') || log.msg.includes('⚠️') ? 'text-rose-400 font-bold' : 'text-slate-300'}>
-                  {log.msg}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       <div className="fixed bottom-8 right-8 z-[110] w-96 pointer-events-none">
         <AnimatePresence>

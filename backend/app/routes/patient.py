@@ -133,3 +133,12 @@ def my_grants(patientId: str):
         return {"grants": grants}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/doctor-notes/{patientId}")
+def get_doctor_notes(patientId: str, current_user: dict = Depends(get_current_user)):
+    # 1. Ownership check
+    if patientId != current_user["uid"]:
+        raise HTTPException(status_code=403, detail="Unauthorized access to dossier history.")
+        
+    notes = db_service.get_patient_notes(patientId)
+    return {"notes": notes}

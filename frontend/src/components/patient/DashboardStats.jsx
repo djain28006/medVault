@@ -1,25 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+
+function AnimatedCounter({ target, duration = 1500 }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    // If target is not a number (like '—'), just show it
+    if (typeof target !== 'number') {
+      setCount(target);
+      return;
+    }
+
+    let start = 0;
+    const end = parseInt(target);
+    if (end === 0) {
+      setCount(0);
+      return;
+    }
+    
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+    
+    return () => clearInterval(timer);
+  }, [target, duration]);
+
+  return <span>{count.toLocaleString()}</span>;
+}
 
 export default function DashboardStats({ stats }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
       {stats.map((stat, i) => (
         <motion.div
           key={stat.label}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="glass-card p-5 group"
+          whileHover={{ y: -6, scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ 
+            delay: i * 0.1,
+            type: "spring",
+            stiffness: 260,
+            damping: 20
+          }}
+          style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)' }}
+          className="backdrop-blur-xl border border-white/[0.08] rounded-[2rem] p-6 md:p-8 group relative overflow-hidden transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:border-brand-500/20 shadow-2xl"
         >
-          <div className="flex items-start justify-between mb-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{stat.label}</span>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${stat.iconBg || 'bg-brand-500/10'}`}>
-              <stat.icon className={`w-4 h-4 ${stat.iconColor || 'text-brand-400'}`} />
+          {/* Subtle Glow Overlay */}
+          <div className="absolute -right-10 -top-10 w-32 h-32 bg-brand-500/5 rounded-full blur-3xl group-hover:bg-brand-500/10 transition-colors duration-500" />
+          
+          <div className="flex items-start justify-between mb-6 relative z-10">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] group-hover:text-slate-300 transition-colors duration-300">
+              {stat.label}
+            </span>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 shadow-lg relative ${
+              stat.iconBg || 'bg-brand-500/10'
+            }`}>
+              <div className="absolute inset-0 rounded-2xl blur-md opacity-0 group-hover:opacity-40 transition-opacity duration-500 bg-current" style={{ color: stat.iconColor === 'text-brand-400' ? '#0ea5e9' : '#10b981' }} />
+              <stat.icon className={`w-6 h-6 relative z-10 ${stat.iconColor || 'text-brand-400'}`} />
             </div>
           </div>
-          <p className="stat-value">{stat.value}</p>
-          {stat.sub && <p className="text-xs text-slate-500 mt-1">{stat.sub}</p>}
+
+          <div className="relative z-10">
+            <p className="text-4xl font-display font-black text-white tracking-tight">
+              <AnimatedCounter target={stat.value} />
+            </p>
+            {stat.sub && (
+              <div className="mt-3 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-success-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                <p className="text-[10px] font-bold text-success-400 uppercase tracking-widest">{stat.sub}</p>
+              </div>
+            )}
+          </div>
         </motion.div>
       ))}
     </div>

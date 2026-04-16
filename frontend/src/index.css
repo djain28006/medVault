@@ -9,8 +9,10 @@
     --danger: 0 84% 60%;
   }
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply bg-[#020617] text-slate-100 antialiased;
     font-feature-settings: 'cv02','cv03','cv04','cv11';
+    /* Dark background fallback */
+    background-color: #020617;
   }
   * { scrollbar-width: thin; scrollbar-color: rgba(14,165,233,0.3) transparent; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -76,5 +78,27 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-brand-600;
+  }
+
+  /* Foundational UI Utilities */
+  .glass-morphism {
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] transition-all duration-300 ease-out;
+  }
+
+  .premium-glow {
+    @apply relative after:absolute after:inset-0 after:bg-brand-500/5 after:blur-[100px] after:pointer-events-none;
+  }
+
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Interactive Elements Baseline */
+  .hover-lift {
+    @apply hover:-translate-y-1 transition-transform duration-300 ease-out;
+  }
+
+  button, a {
+    @apply transition-all duration-200 ease-in-out;
   }
 }

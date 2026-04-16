@@ -6,13 +6,16 @@ import HealthScoreCard from '../patient/HealthScoreCard';
 import ReportsList from '../patient/ReportsList';
 import MedicationTracker from '../patient/MedicationTracker';
 import DashboardStats from '../patient/DashboardStats';
+import ClinicalNotes from '../shared/ClinicalNotes';
 import { api } from '../../services/api';
 
 export default function PatientDetailView({ patientId, onBack }) {
   const [healthScore, setHealthScore] = useState(null);
   const [reports, setReports] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingNotes, setLoadingNotes] = useState(false);
 
   useEffect(() => {
     if (patientId) fetchData();
@@ -20,19 +23,35 @@ export default function PatientDetailView({ patientId, onBack }) {
 
   const fetchData = async () => {
     setLoading(true);
+    setLoadingNotes(true);
     try {
-      const [scoreRes, reportsRes, summaryRes] = await Promise.all([
+      const [scoreRes, reportsRes, summaryRes, notesRes] = await Promise.all([
         api.getHealthScore(patientId),
         api.getMyReports(patientId),
-        api.getPatientSummary(patientId)
+        api.getPatientSummary(patientId),
+        api.getDoctorPatientNotes(patientId)
       ]);
       setHealthScore(scoreRes.data);
       setReports(reportsRes.data.reports || []);
       setSummary(summaryRes.data);
+      setNotes(notesRes.data.notes || []);
     } catch (err) {
       console.error("Error fetching patient detail:", err);
     } finally {
       setLoading(false);
+      setLoadingNotes(false);
+    }
+  };
+
+  const handleSaveNote = async (noteData) => {
+    try {
+      await api.createPatientNote({ ...noteData, patientId });
+      // Refresh notes list from server to ensure LIVE data
+      const res = await api.getDoctorPatientNotes(patientId);
+      setNotes(res.data.notes || []);
+    } catch (err) {
+      console.error("Failed to save observation:", err);
+      throw err;
     }
   };
 
@@ -75,6 +94,14 @@ export default function PatientDetailView({ patientId, onBack }) {
           loading={false} 
         />
         <div className="space-y-6">
+          <div className="glass-card p-6">
+            <ClinicalNotes 
+              notes={notes} 
+              onAddNote={handleSaveNote} 
+              canAdd={true} 
+              loading={loadingNotes} 
+            />
+          </div>
           <ReportsList reports={reports.slice(0, 5)} loading={false} />
           <MedicationTracker patientId={patientId} />
         </div>

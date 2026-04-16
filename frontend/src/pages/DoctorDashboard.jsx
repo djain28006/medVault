@@ -13,6 +13,7 @@ import DashboardStats from '../components/patient/DashboardStats';
 import AlertBanner from '../components/shared/AlertBanner';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { GaugeChart } from '../components/shared/Chart';
 
 const menuItems = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -32,17 +33,23 @@ export default function DoctorDashboard() {
   const [toast, setToast] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [healthScore, setHealthScore] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
 
   const showToast = (msg, type = 'success') => setToast({ message: msg, type });
 
   const handlePatientSelect = async (patientId) => {
     setSelectedPatient(patientId);
-    setViewMode('detail');
+    setViewMode('list'); // Default to list view first to show summary
     setLoadingSummary(true);
+    setHealthScore(null);
     try {
-      const res = await api.getPatientSummary(patientId);
-      setSummary(res.data);
+      const [summaryRes, scoreRes] = await Promise.all([
+        api.getPatientSummary(patientId),
+        api.getHealthScore(patientId)
+      ]);
+      setSummary(summaryRes.data);
+      setHealthScore(scoreRes.data);
     } catch { showToast('Failed to load patient summary', 'error'); }
     finally { setLoadingSummary(false); }
   };
@@ -77,15 +84,41 @@ export default function DoctorDashboard() {
                           </div>
                         </div>
                       ) : summary ? (
-                        <div className="glass-card p-6 relative overflow-hidden">
-                          <div className="absolute -right-12 -top-12 w-40 h-40 bg-brand-500/5 rounded-full blur-3xl" />
-                          <h3 className="section-title">Clinical Summary</h3>
-                          <h4 className="text-xl font-display font-bold text-white mb-4">{summary.patientId}</h4>
-                          <p className="text-sm text-slate-300 leading-relaxed p-4 bg-white/[0.03] rounded-xl border border-white/[0.06] mb-4">{summary.summary}</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {summary.trends?.map((t, i) => <span key={i} className="badge badge-blue">{t}</span>)}
+                        <div className="glass-card p-6 relative overflow-hidden flex flex-col min-h-[400px]">
+                          <div className="absolute -right-12 -top-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
+                          <div className="flex items-center justify-between mb-6 relative z-10">
+                            <h3 className="section-title">Clinical Snapshot</h3>
+                            {healthScore && (
+                              <div className="text-[10px] font-black text-brand-400 uppercase tracking-widest bg-brand-500/10 px-2 py-1 rounded-lg border border-brand-500/20">
+                                Patient Matrix Live
+                              </div>
+                            )}
                           </div>
-                          <button onClick={() => setViewMode('detail')} className="btn-primary mt-6 w-full">View Full Dashboard</button>
+                          
+                          <div className="flex flex-col md:flex-row gap-8 mb-6 relative z-10">
+                            {healthScore && (
+                              <div className="flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.06] shrink-0">
+                                <GaugeChart value={healthScore.score} size={140} />
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">{healthScore.category}</span>
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <h4 className="text-xl font-display font-black text-white mb-3">ID: {summary.patientId}</h4>
+                              <p className="text-sm text-slate-300 leading-relaxed font-medium line-clamp-6">{summary.summary}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 flex-wrap mb-6 relative z-10">
+                            {summary.trends?.map((t, i) => (
+                              <span key={i} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <button onClick={() => setViewMode('detail')} className="btn-primary mt-auto w-full font-black text-xs uppercase tracking-widest py-4">
+                            Access Full Clinical OS
+                          </button>
                         </div>
                       ) : (
                         <div className="glass-card p-6 flex items-center justify-center text-center min-h-[300px]">
