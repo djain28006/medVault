@@ -6,6 +6,7 @@ Pipeline:
   - Image → Pillow preprocessing (grayscale, denoise, binarize) → Tesseract
 """
 
+import os
 import io
 import logging
 import fitz                          # PyMuPDF
@@ -13,6 +14,11 @@ import pytesseract
 from PIL import Image, ImageFilter, ImageEnhance
 
 logger = logging.getLogger(__name__)
+
+# -- Tesseract path for Windows environments (optional env var)
+tess_cmd = os.getenv("TESSERACT_CMD")
+if tess_cmd:
+    pytesseract.pytesseract.tesseract_cmd = tess_cmd
 
 # ── Tesseract config (OEM 3 = LSTM engine, PSM 6 = assume uniform text block)
 TESS_CONFIG = "--oem 3 --psm 6"

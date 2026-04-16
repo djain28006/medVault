@@ -1,13 +1,7 @@
 import axios from 'axios';
 import { auth } from '../firebase/config';
 
-const origin = typeof window !== 'undefined' ? window.location.origin : '';
-const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
-
-// Use localhost for local dev, and the tunnel for network/mobile access
-const API_BASE = isLocal 
-  ? 'http://localhost:8005' 
-  : 'https://lazy-banks-divide.loca.lt';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 
 const apiClient = axios.create({ baseURL: API_BASE });

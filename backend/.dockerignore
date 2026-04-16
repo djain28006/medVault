@@ -1,0 +1,22 @@
+# Exclude local dev artifacts from Docker image
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.db
+.git/
+.gitignore
+.env
+node_modules/
+temp/
+uploads/
+*.pdf
+*.png
+*.jpg
+*.jpeg
+.ipynb_checkpoints/
+*.ipynb
+docker-compose.yml
+Dockerfile

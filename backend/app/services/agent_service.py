@@ -12,6 +12,7 @@ from app.services.db_service import db_service
 from app.services.pdf_service import pdf_service
 from app.services.mail_service import mail_service
 from app.firebase_config import bucket
+import os
 import random
 import string
 
@@ -189,12 +190,14 @@ class AgentService:
         return self.emergency_agent.handle_scan(qr_data)
         
     def generate_emergency_qr(self, patient_id: str) -> dict:
-        # One-click link to download PDF directly (using local IP for scanner accessibility)
-        pdf_url = f"http://192.168.1.11:8005/api/emergency/download-summary/{patient_id}"
+        # Emergency QR should point to the FRONTEND public URL for human viewing
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        qr_target = f"{frontend_url}/emergency-report?pid={patient_id}"
+        
         return {
             "patientId": patient_id,
-            "qrCodePayload": pdf_url,
-            "message": "Emergency QR generated for direct PDF access"
+            "qrCodePayload": qr_target,
+            "message": "Emergency QR generated for browser-based clinical override"
         }
 
     def get_emergency_critical_info(self, patient_id: str) -> dict:
