@@ -1,3 +1,6 @@
+import os
+import firebase_admin
+from firebase_admin import credentials, firestore, auth, storage
 import json
 
 # Detect Production Environment (Render)

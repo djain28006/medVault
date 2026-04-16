@@ -16,10 +16,12 @@ class LLMService:
     def _load_env(self):
         # Force load .env from project root
         env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
-        load_dotenv(env_path, override=True)
+        
         if os.path.exists(env_path):
+            load_dotenv(env_path, override=True)
             logger.info(f"✅ LLMService loaded .env from {env_path}")
-        else:
+        elif os.getenv("RENDER") != "true":
+            # Only warn if we are NOT in production/Render
             logger.warning(f"⚠️ LLMService could not find .env at {env_path}")
 
     def get_groq_client(self) -> Optional[Groq]:
