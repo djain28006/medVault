@@ -117,7 +117,7 @@ export default function Login() {
                       value={email} 
                       onChange={e => setEmail(e.target.value)} 
                       className="input-field smooth-transition focus:shadow-[0_0_20px_rgba(14,165,233,0.1)]" 
-                      placeholder="root@mediagent.io" 
+                      placeholder="root@medvault.io" 
                       required 
                     />
                   </div>

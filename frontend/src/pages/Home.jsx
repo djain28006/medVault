@@ -87,7 +87,7 @@ export default function Home() {
             </motion.h1>
 
             <motion.p variants={itemVariants} className="text-lg text-slate-400 leading-relaxed max-w-lg mb-10 font-medium">
-              MediAgent orchestrates 7 autonomous AI agents to manage your entire healthcare journey — from OCR-powered report extraction to emergency QR-based triage.
+              MedVault orchestrates 7 autonomous AI agents to manage your entire healthcare journey — from OCR-powered report extraction to emergency QR-based triage.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-wrap gap-4">

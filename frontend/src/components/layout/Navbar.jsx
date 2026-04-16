@@ -23,7 +23,7 @@ export default function Navbar({ onMenuToggle }) {
               <Activity className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-display font-bold text-white hidden sm:block">
-              Medi<span className="text-brand-400">Agent</span>
+              Med<span className="text-brand-400">Vault</span>
             </span>
           </Link>
         </div>

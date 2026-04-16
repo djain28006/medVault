@@ -128,7 +128,7 @@ export default function EmergencyView() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white font-black text-xl italic tracking-tighter shadow-lg shadow-brand-500/20">M</div>
-                <h1 className="text-2xl font-black tracking-tighter uppercase">MediAgent <span className="text-slate-400">Clinical Record</span></h1>
+                <h1 className="text-2xl font-black tracking-tighter uppercase">MedVault <span className="text-slate-400">Clinical Record</span></h1>
               </div>
               <div className="pt-4">
                 <h2 className="text-5xl font-black tracking-tighter text-slate-900 mb-1 leading-none break-words max-w-[500px]">
@@ -382,7 +382,7 @@ export default function EmergencyView() {
       
       {/* Disclaimer (Hidden on Print) */}
       <div className="max-w-4xl mx-auto mt-12 text-center print:hidden">
-         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] opacity-40">MediAgent Intelligence Systems • Clinical Node V4.2.1</p>
+         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] opacity-40">MedVault Intelligence Systems • Clinical Node V4.2.1</p>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `

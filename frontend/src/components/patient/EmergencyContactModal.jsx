@@ -177,7 +177,7 @@ export default function EmergencyContactModal({ patientId, onSuccess }) {
                 <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Emergency Protocol <span className="text-danger-500">Required</span></h2>
               </div>
               <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-                MediAgent requires at least <span className="text-white font-bold underline underline-offset-4 decoration-danger-500/50">two active emergency vectors</span> to stabilize your Clinical Identity.
+                MedVault requires at least <span className="text-white font-bold underline underline-offset-4 decoration-danger-500/50">two active emergency vectors</span> to stabilize your Clinical Identity.
               </p>
             </div>
             
@@ -234,7 +234,7 @@ export default function EmergencyContactModal({ patientId, onSuccess }) {
 
         {/* Footer info */}
         <div className="bg-slate-950/50 px-8 py-4 flex items-center justify-center border-t border-white/5">
-           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Secure clinical synchronization • MediAgent V4.2</p>
+           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Secure clinical synchronization • MedVault V4.2</p>
         </div>
       </motion.div>
     </div>
