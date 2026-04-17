@@ -3,59 +3,49 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth, storage
 import json
 
-# Detect Production Environment (Render)
+# Detect Production Environment
 is_production = os.getenv("RENDER") == "true"
 
-def validate_firebase_config(config_dict: dict) -> bool:
-    """Check for 5 critical keys required by Firebase Admin SDK."""
-    required_keys = ["type", "project_id", "private_key", "client_email", "token_uri"]
-    return all(key in config_dict for key in required_keys)
-
-# Prevent re-initialization if imported multiple times
-if not firebase_admin._apps:
+def get_firebase_creds():
+    """Logic to resolve Firebase credentials from Env Var or Local File."""
     json_creds = os.getenv("FIREBASE_CREDENTIALS_JSON")
-    cert_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "./firebase-service-account.json")
-    bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET", "healthcareai-a5e07.firebasestorage.app")
     
-    cred = None
-    
-    # 1. Try Environment Variable (Primary for Production)
+    # 1. Primary: Environment Variable (Safe for Cloud)
     if json_creds:
         try:
             cred_dict = json.loads(json_creds)
-            if validate_firebase_config(cred_dict):
-                cred = credentials.Certificate(cred_dict)
-                print("Firebase initialized successfully (Render mode)")
-            else:
-                print("ERROR: FIREBASE_CREDENTIALS_JSON is missing required clinical service keys.")
+            # CRITICAL: Fix double-escaped newlines in private key if they exist
+            if "private_key" in cred_dict:
+                cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
+            return credentials.Certificate(cred_dict)
         except Exception as e:
             print(f"ERROR: Failed to parse FIREBASE_CREDENTIALS_JSON: {e}")
     
-    # 2. Try Local File (Fallback for Local Development ONLY)
-    if not cred:
-        # Resolve absolute path to ensure consistency regardless of CWD
-        abs_cert_path = os.path.abspath(cert_path)
-        if os.path.exists(abs_cert_path):
-            try:
-                cred = credentials.Certificate(abs_cert_path)
-                print(f"Firebase initialized via credentials: {abs_cert_path}")
-            except Exception as e:
-                print(f"ERROR: Failed to initialize via local file {abs_cert_path}: {e}")
-        else:
-            print(f"WARNING: Firebase credentials file not found at {abs_cert_path}")
+    # 2. Fallback: Local File (Development Only)
+    cert_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "./firebase-service-account.json")
+    abs_cert_path = os.path.abspath(cert_path)
+    if os.path.exists(abs_cert_path):
+        try:
+            return credentials.Certificate(abs_cert_path)
+        except Exception as e:
+            print(f"ERROR: Failed to load local cert {abs_cert_path}: {e}")
+            
+    return None
+
+# Prevent re-initialization
+if not firebase_admin._apps:
+    bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET", "healthcareai-a5e07.firebasestorage.app")
+    cred = get_firebase_creds()
     
-    # 3. Final Initialization or Fail-Fast
     if cred:
         firebase_admin.initialize_app(cred, {
             'storageBucket': bucket_name
         })
         print("Firebase Admin Initialized Successfully!")
     elif is_production:
-        # STRICT RULE: Fail-fast in production to prevent insecure database bypass
-        raise RuntimeError("FATAL: Incomplete Firebase credentials on Render. Production environment secured — refusal to start without valid Auth.")
+        raise RuntimeError("FATAL: No Firebase credentials found in production environment.")
     else:
-        # Allow bypass for local dev early prototyping
-        print("WARNING: No valid Firebase credentials found. Running in localized bypass mode. Data will NOT be live.")
+        print("WARNING: Running without valid Firebase credentials. Firestore/Storage will fail.")
 
 # Export initialized services
 db = firestore.client() if firebase_admin._apps else None

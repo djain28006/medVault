@@ -15,10 +15,15 @@ from PIL import Image, ImageFilter, ImageEnhance
 
 logger = logging.getLogger(__name__)
 
-# -- Tesseract path for Windows environments (optional env var)
+# -- Tesseract path (optional, defaults to system path in Linux/Docker)
 tess_cmd = os.getenv("TESSERACT_CMD")
-if tess_cmd:
+if tess_cmd and os.path.exists(tess_cmd):
     pytesseract.pytesseract.tesseract_cmd = tess_cmd
+elif os.name == 'nt' and not tess_cmd:
+    # Common Windows default path for dev convenience
+    default_win_path = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    if os.path.exists(default_win_path):
+        pytesseract.pytesseract.tesseract_cmd = default_win_path
 
 # ── Tesseract config (OEM 3 = LSTM engine, PSM 6 = assume uniform text block)
 TESS_CONFIG = "--oem 3 --psm 6"

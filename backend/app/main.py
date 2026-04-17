@@ -44,8 +44,37 @@ def root():
     return {
         "status": "MediAgent API v1.1.0 (Live)",
         "provider": "OpenAI-Primary",
-        "timestamp": "2026-04-15"
+        "timestamp": "2026-04-18"
     }
+
+@app.get("/health")
+def health_check():
+    """Diagnostic endpoint for Render health monitoring."""
+    from .firebase_config import firebase_admin
+    return {
+        "status": "healthy",
+        "environment": "production" if os.getenv("RENDER") == "true" else "local",
+        "firebase_initialized": len(firebase_admin._apps) > 0,
+        "uptime": "active"
+    }
+
+@app.get("/api/test-ocr")
+def test_ocr():
+    """Verify Tesseract binary accessibility in the production container."""
+    import subprocess
+    try:
+        # Check tesseract version
+        result = subprocess.run(["tesseract", "--version"], capture_output=True, text=True, timeout=5)
+        return {
+            "ocr_status": "available",
+            "version_info": result.stdout.split('\n')[0],
+            "system": os.name
+        }
+    except Exception as e:
+        return {
+            "ocr_status": "error",
+            "detail": str(e)
+        }
     
 @app.get("/api/test-email")
 def test_email(email: str = "danishsjain@gmail.com"):
