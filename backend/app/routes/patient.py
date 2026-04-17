@@ -65,10 +65,14 @@ def get_medications(patientId: str):
                         "drug": med.get("drug", "Unknown"),
                         "dosage": med.get("dosage", ""),
                         "frequency": med.get("frequency", ""),
-                        "duration": med.get("duration", ""),
+                        "duration": med.get("durationDays", med.get("duration", "")),
+                        "durationDays": med.get("durationDays", 0),
                         "slot": slot,
                         "taken": is_taken,
-                        "time": "08:00 AM" if slot == "Morning" else ("02:00 PM" if slot == "Afternoon" else "08:00 PM")
+                        "time": "08:00 AM" if slot == "Morning" else ("02:00 PM" if slot == "Afternoon" else "08:00 PM"),
+                        "doctorName": rx.get("doctorName", "Doctor"),
+                        "prescriptionDate": rx.get("date"),
+                        "diagnosis": rx.get("diagnosis", "")
                     })
     return {"medications": all_meds}
 

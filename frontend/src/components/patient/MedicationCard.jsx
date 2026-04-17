@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Clock, AlertCircle } from 'lucide-react';
+import { Check, Clock, AlertCircle, User, Calendar, MapPin } from 'lucide-react';
+import NearbyMedicineModal from './NearbyMedicineModal';
 
 export default function MedicationCard({ med, onToggle }) {
   const isTaken = med.taken;
+  const [showNearby, setShowNearby] = useState(false);
   
   // Define colors based on status
   const getStatusColors = () => {
@@ -13,6 +15,7 @@ export default function MedicationCard({ med, onToggle }) {
   };
 
   return (
+    <>
     <motion.div
       layout
       initial={{ opacity: 0, y: 10 }}
@@ -40,6 +43,33 @@ export default function MedicationCard({ med, onToggle }) {
           
           <h3 className="text-xl font-black text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">{med.drug}</h3>
           <p className="mt-1 text-xs font-black uppercase tracking-widest text-slate-500">{med.dosage} • {med.frequency}</p>
+          
+          {/* Doctor & Date metadata */}
+          {(med.doctorName || med.prescriptionDate) && (
+            <div className="mt-2.5 flex items-center gap-3 flex-wrap">
+              {med.doctorName && med.doctorName !== 'Doctor' && (
+                <div className="flex items-center gap-1 text-[9px] font-bold text-brand-400/70 uppercase tracking-widest">
+                  <User className="h-3 w-3" />
+                  {med.doctorName}
+                </div>
+              )}
+              {med.prescriptionDate && (
+                <div className="flex items-center gap-1 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(med.prescriptionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Affordable Nearby Button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowNearby(true); }}
+            className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/20 hover:border-brand-500/30 text-[9px] font-black text-brand-400 uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+          >
+            <MapPin className="w-3 h-3" />
+            Check Affordable Nearby
+          </button>
         </div>
 
         <motion.button
@@ -69,5 +99,11 @@ export default function MedicationCard({ med, onToggle }) {
         />
       </div>
     </motion.div>
+
+    {/* Nearby Medicine Modal */}
+    {showNearby && (
+      <NearbyMedicineModal med={med} onClose={() => setShowNearby(false)} />
+    )}
+    </>
   );
 }

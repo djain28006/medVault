@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.services.agent_service import AgentService
 from app.services.db_service import db_service
-from app.models.schemas import AccessRequestReq, AccessRequestRes, OTPVerifyReq, PrescriptionCreateReq, PatientNoteCreateReq
+from app.models.schemas import AccessRequestReq, AccessRequestRes, OTPVerifyReq, PrescriptionCreateReq, PatientNoteCreateReq, PatientNoteEmailReq
 from app.dependencies import require_doctor
 
 router = APIRouter(prefix="/api/doctor", tags=["Doctor"], dependencies=[Depends(require_doctor)])
@@ -84,6 +84,17 @@ def create_patient_note(req: PatientNoteCreateReq, current_user: dict = Depends(
     
     note_id = db_service.save_patient_note(note_data)
     return {"message": "Clinical note synchronized", "noteId": note_id, "note": note_data}
+
+@router.post("/create-note-email")
+def create_note_by_email(req: PatientNoteEmailReq, current_user: dict = Depends(require_doctor)):
+    try:
+        doctor_id = current_user["uid"]
+        note_data = req.model_dump()
+        note_data["doctorId"] = doctor_id
+        res = service.create_note(note_data)
+        return {"message": "Clinical note created", **res}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/patient-notes/{patientId}")
 def get_patient_notes(patientId: str, current_user: dict = Depends(require_doctor)):

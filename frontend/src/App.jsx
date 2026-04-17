@@ -9,7 +9,6 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
-import Emergency from './pages/EmergencyView';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -38,7 +37,6 @@ function AnimatedRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/login/patient" element={<Login />} />
           <Route path="/login/doctor" element={<Login />} />
-          <Route path="/emergency" element={<Emergency />} />
           <Route path="/patient/dashboard" element={
             <ProtectedRoute allowedRoles={['patient']}>
               <PatientDashboard />

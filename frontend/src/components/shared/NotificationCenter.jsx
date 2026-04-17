@@ -53,7 +53,7 @@ export default function NotificationCenter() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute right-0 z-50 mt-4 w-96 origin-top-right rounded-3xl border border-slate-800 bg-slate-950/90 p-2 shadow-2xl backdrop-blur-xl"
+              className="absolute right-0 z-50 mt-4 w-[calc(100vw-2rem)] sm:w-96 max-w-full origin-top-right rounded-3xl border border-slate-800 bg-slate-950/90 p-2 shadow-2xl backdrop-blur-xl"
             >
               <div className="flex items-center justify-between p-4 border-b border-slate-900">
                 <h3 className="text-lg font-bold text-slate-100">Clinical Alerts</h3>

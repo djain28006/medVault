@@ -6,7 +6,6 @@ from agents.alert_agent import AlertAgent
 from agents.doctor_access_agent import DoctorAccessAgent
 from agents.intelligence_agent import IntelligenceAgent
 from agents.prescription_agent import PrescriptionAgent
-from agents.emergency_agent import EmergencyAgent
 
 from app.services.db_service import db_service
 from app.services.pdf_service import pdf_service
@@ -25,7 +24,6 @@ class AgentService:
         self.doctor_access_agent = DoctorAccessAgent()
         self.intelligence_agent = IntelligenceAgent()
         self.prescription_agent = PrescriptionAgent()
-        self.emergency_agent = EmergencyAgent()
 
     def process_record(self, file_name: str, file_bytes: bytes, content_type: str, patient_id: str) -> dict:
         # 1. Upload to Firebase Storage
@@ -169,57 +167,65 @@ class AgentService:
         return self.intelligence_agent.analyze_patient(patient_id)
 
     def create_prescription(self, data: dict) -> dict:
+        # 1. Resolve patientId from patientEmail
+        email = data.get("patientEmail")
+        if not email:
+            raise ValueError("Patient Email is required for prescription creation.")
+            
+        patient = db_service.get_user_by_email(email)
+        if not patient:
+            raise ValueError(f"No account found for email '{email}'. The patient must register an account first.")
+        
+        # Inject the resolved patientId into the data for the agent/DB
+        data["patientId"] = patient.get("uid")
+        
+        # 2. Add Doctor Identity
+        doctor_id = data.get("doctorId")
+        if doctor_id:
+            doc_profile = db_service.get_user(doctor_id)
+            if doc_profile:
+                data["doctorName"] = doc_profile.get("displayName") or doc_profile.get("email") or "Dr. Doctor"
+            else:
+                data["doctorName"] = "Dr. Doctor"
+
         rx = self.prescription_agent.create_prescription(data)
         db_service.save_prescription(rx)
         return rx
 
-    def handle_emergency(self, qr_data: str) -> dict:
-        # qr_data currently is just the patient_id (or encoded version)
-        patient_id = qr_data 
-        # In a real app, you'd decode/decrypt the qr_data token here
+    def create_note(self, data: dict) -> dict:
+        """Surgically creates a clinical note using patient email resolution."""
+        # 1. Resolve Patient
+        email = data.get("patientEmail")
+        if not email:
+            raise ValueError("Patient Email is required.")
+            
+        patient = db_service.get_user_by_email(email)
+        if not patient:
+            raise ValueError(f"No account found for '{email}'. Ensure the patient is registered.")
+            
+        patient_id = patient.get("uid")
         
-        # Log the emergency access
-        scan_record = {
-            "scanId": f"scan_{uuid.uuid4().hex[:6]}",
+        # 2. Resolve Doctor Identity
+        doctor_id = data.get("doctorId")
+        doc_profile = db_service.get_user(doctor_id) if doctor_id else None
+        doctor_name = "Dr. Doctor"
+        if doc_profile:
+            doctor_name = doc_profile.get("displayName") or doc_profile.get("email") or "Dr. Doctor"
+            
+        # 3. Create Note Object
+        import datetime
+        note_data = {
             "patientId": patient_id,
+            "patientEmail": email,
+            "doctorId": doctor_id,
+            "doctorName": doctor_name,
+            "title": data.get("title", "Clinical Note"),
+            "content": data.get("content", ""),
+            "category": data.get("category", "observation"),
             "timestamp": datetime.datetime.now().isoformat(),
-            "type": "emergency_qr_scan"
+            "createdAt": datetime.datetime.now().isoformat()
         }
-        # db_service.save_emergency_scan(scan_record) # Optional log
         
-        return self.emergency_agent.handle_scan(qr_data)
-        
-    def generate_emergency_qr(self, patient_id: str) -> dict:
-        # Emergency QR should point to the FRONTEND public URL for human viewing
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-        qr_target = f"{frontend_url}/emergency-report?pid={patient_id}"
-        
-        return {
-            "patientId": patient_id,
-            "qrCodePayload": qr_target,
-            "message": "Emergency QR generated for browser-based clinical override"
-        }
+        note_id = db_service.save_patient_note(note_data)
+        return {"noteId": note_id, "note": note_data}
 
-    def get_emergency_critical_info(self, patient_id: str) -> dict:
-        profile = db_service.get_user_profile(patient_id) or {}
-        reports = db_service.get_patient_reports(patient_id)
-        prescriptions = db_service.get_patient_prescriptions(patient_id)
-        vitals = db_service.get_latest_vitals(patient_id, limit=5)
-        
-        return {
-            "patientId": patient_id,
-            "displayName": profile.get("displayName", "Unknown Patient"),
-            "bloodType": profile.get("bloodType", "Unknown"),
-            "allergies": profile.get("allergies", []),
-            "chronicConditions": profile.get("chronicConditions", []),
-            "emergencyContacts": profile.get("emergencyContacts", []),
-            "latestVitals": vitals,
-            "recentReportsCount": len(reports),
-            "recentPrescriptionsCount": len(prescriptions)
-        }
-
-    def get_emergency_summary_pdf(self, patient_id: str) -> bytes:
-        profile = db_service.get_user_profile(patient_id) or {"uid": patient_id}
-        reports = db_service.get_patient_reports(patient_id)
-        prescriptions = db_service.get_patient_prescriptions(patient_id)
-        return pdf_service.generate_medical_summary_pdf(profile, reports, prescriptions)

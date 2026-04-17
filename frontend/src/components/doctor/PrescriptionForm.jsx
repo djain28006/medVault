@@ -4,10 +4,11 @@ import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { DRUG_OPTIONS, FREQUENCY_OPTIONS, DURATION_OPTIONS } from '../../utils/constants';
 
-const emptyMed = { drug: '', dosage: '', frequency: '2x daily', duration: '30 days' };
+const emptyMed = { drug: '', dosage: '', frequency: '2x daily', durationDays: 1 };
 
 export default function PrescriptionForm({ patientId = 'patient_123', onToast }) {
   const { currentUser } = useAuth();
+  const [patientEmail, setPatientEmail] = useState('');
   const [meds, setMeds] = useState([{ ...emptyMed }]);
   const [diagnosis, setDiagnosis] = useState('');
   const [nextVisit, setNextVisit] = useState('');
@@ -24,10 +25,17 @@ export default function PrescriptionForm({ patientId = 'patient_123', onToast })
     setLoading(true);
     try {
       const doctorId = currentUser?.uid || 'unknown';
-      const res = await api.createPrescription({ patientId, doctorId, medications: meds, diagnosis, nextVisit });
+      const res = await api.createPrescription({ 
+        patientEmail, 
+        doctorId, 
+        medications: meds, 
+        diagnosis, 
+        nextVisit 
+      });
       setResult(res.data.prescription || res.data);
       onToast?.('Prescription created successfully');
       // Reset form
+      setPatientEmail('');
       setMeds([{ ...emptyMed }]);
       setDiagnosis('');
       setNextVisit('');
@@ -41,9 +49,29 @@ export default function PrescriptionForm({ patientId = 'patient_123', onToast })
     <div className="glass-card p-6">
       <h3 className="section-title">Create Prescription</h3>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="label">Diagnosis</label>
-          <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} className="input-field h-20 resize-none" placeholder="e.g. Type 2 Diabetes Mellitus with Hypertension" />
+        <div className="space-y-4">
+          <div>
+            <label className="label">PATIENT EMAIL ID</label>
+            <input 
+              type="email" 
+              value={patientEmail} 
+              onChange={e => setPatientEmail(e.target.value)} 
+              className="input-field" 
+              placeholder="patient@example.com" 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className="label">DIAGNOSIS</label>
+            <textarea 
+              value={diagnosis} 
+              onChange={e => setDiagnosis(e.target.value)} 
+              className="input-field h-20 resize-none" 
+              placeholder="e.g. Type 2 Diabetes Mellitus with Hypertension" 
+              required
+            />
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -71,9 +99,18 @@ export default function PrescriptionForm({ patientId = 'patient_123', onToast })
               <select value={m.frequency} onChange={e => updateMed(i, 'frequency', e.target.value)} className="input-field">
                 {FREQUENCY_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
-              <select value={m.duration} onChange={e => updateMed(i, 'duration', e.target.value)} className="input-field">
-                {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <div className="space-y-1">
+                <input 
+                  type="number" 
+                  min="1"
+                  value={m.durationDays} 
+                  onChange={e => updateMed(i, 'durationDays', parseInt(e.target.value) || 0)} 
+                  placeholder="Days" 
+                  className="input-field" 
+                  required 
+                />
+                <p className="text-[10px] text-slate-500 font-bold uppercase ml-1">Days</p>
+              </div>
               <div className="flex items-center justify-end">
                 {meds.length > 1 && (
                   <button type="button" onClick={() => removeMed(i)} className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, FileText, Activity, QrCode, Shield, Pill, Zap } from 'lucide-react';
+import { LayoutDashboard, FileText, Activity, QrCode, Shield, Pill, Zap, MessageSquare } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
@@ -10,13 +10,12 @@ import ReportUpload from '../components/patient/ReportUpload';
 import ReportsList from '../components/patient/ReportsList';
 import MedicationTracker from '../components/patient/MedicationTracker';
 import AccessControl from '../components/patient/AccessControl';
-import EmergencyQR from '../components/patient/EmergencyQR';
-import EmergencyContactModal from '../components/patient/EmergencyContactModal';
 import AlertBanner from '../components/shared/AlertBanner';
 import HackathonNudgeSystem from '../components/shared/HackathonNudgeSystem';
 import { api } from '../services/api';
 import IntelligenceBanner from '../components/patient/IntelligenceBanner';
 import ClinicalNotes from '../components/shared/ClinicalNotes';
+import PatientNotesList from '../components/patient/PatientNotesList';
 
 import { useAuth } from '../context/AuthContext';
 
@@ -24,8 +23,8 @@ const menuItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'reports', label: 'Reports', icon: FileText },
   { id: 'medications', label: 'Medications', icon: Pill },
+  { id: 'notes', label: 'Notes', icon: MessageSquare },
   { id: 'access', label: 'Access Control', icon: Shield },
-  { id: 'emergency', label: 'Emergency QR', icon: QrCode },
 ];
 
 const containerVariants = {
@@ -63,7 +62,6 @@ export default function PatientDashboard() {
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingVitals, setLoadingVitals] = useState(true);
   const [loadingNotes, setLoadingNotes] = useState(true);
-  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [profile, setProfile] = useState(null);
 
 
@@ -124,12 +122,8 @@ export default function PatientDashboard() {
       setProfile(profileRes.data);
       setDoctorNotes(notesRes.data.notes || []);
 
-      // MANDATORY CHECK: Show modal if < 2 contacts
-      if (profileRes.data && (!profileRes.data.emergencyContacts || profileRes.data.emergencyContacts.length < 2)) {
-        setShowEmergencyModal(true);
-      } else {
-        setShowEmergencyModal(false);
-      }
+      // Emergency feature was removed, no longer checking contacts.
+
     } catch (err) {
       console.error("Dashboard data fetch error:", err);
     } finally {
@@ -155,8 +149,8 @@ export default function PatientDashboard() {
       <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar items={menuItems} activeTab={activeTab} setActiveTab={setActiveTab} role="patient" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className="flex-1 pt-16 lg:pl-64">
-        <div className="p-6 md:p-8 lg:p-10 max-w-7xl mx-auto">
+      <main className="flex-1 pt-16 lg:pl-64 flex flex-col">
+        <div className="p-6 md:p-8 lg:p-10 w-full max-w-[1600px] mx-auto flex-1">
           <motion.div 
             key={activeTab} 
             initial="hidden"
@@ -166,59 +160,52 @@ export default function PatientDashboard() {
           >
             {activeTab === 'overview' && (
               <div className="flex flex-col gap-6">
+
                 {/* ROW 1: STATS */}
                 <motion.div variants={itemVariants} className="w-full">
                   <DashboardStats stats={statCards} />
                 </motion.div>
-                
-                {/* ROW 2: MAIN CONTENT SPLIT (60/40) */}
+
+                {/* MAIN GRID: Left (Intelligence + Notes) | Right (Score + Archives) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                
-                {/* LEFT COLUMN (60%) - Intelligence & Notes */}
-                <div className="lg:col-span-7 space-y-6 flex flex-col h-full">
-                  {/* Intelligence Panel */}
-                  <motion.div variants={itemVariants} className="flex-1">
-                    <IntelligenceBanner summary={summary} />
-                  </motion.div>
 
-                  {/* Clinical History & Notes */}
-                  <motion.div variants={itemVariants} className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 shadow-2xl shadow-brand-500/5">
-                    <ClinicalNotes 
-                      notes={doctorNotes} 
-                      loading={loadingNotes} 
-                      canAdd={false} 
-                    />
-                  </motion.div>
+                  {/* LEFT COLUMN (7/12) — Intelligence → Notes */}
+                  <div className="lg:col-span-7 space-y-6">
+                    <motion.div variants={itemVariants}>
+                      <IntelligenceBanner summary={summary} />
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 shadow-2xl shadow-brand-500/5">
+                        <ClinicalNotes 
+                          notes={doctorNotes} 
+                          loading={loadingNotes} 
+                          canAdd={false} 
+                        />
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* RIGHT COLUMN (5/12) — Score → Archives */}
+                  <div className="lg:col-span-5 space-y-6">
+                    <motion.div variants={itemVariants}>
+                      <HealthScoreCard 
+                        score={healthScore?.score || 0} 
+                        factors={healthScore?.factors || []} 
+                        summary={summary} 
+                        loading={loadingSummary} 
+                      />
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                      <ReportsList reports={reports.slice(0, 5)} loading={loadingReports} />
+                    </motion.div>
+                  </div>
+
                 </div>
 
-                {/* RIGHT COLUMN (40%) - Score, Upload, Archives */}
-                <div className="lg:col-span-5 space-y-6 flex flex-col">
-                  {/* Health Score Gauge */}
-                  <motion.div variants={itemVariants}>
-                    <HealthScoreCard 
-                      score={healthScore?.score || 0} 
-                      factors={healthScore?.factors || []} 
-                      summary={summary} 
-                      loading={loadingSummary} 
-                    />
-                  </motion.div>
-                  
-                  {/* Data Ingestion (Upload) */}
-                  <motion.div variants={itemVariants}>
-                    <ReportUpload 
-                      onSuccess={(msg) => { showToast(msg); refreshData(); }} 
-                      onError={(msg) => showToast(msg, 'error')} 
-                    />
-                  </motion.div>
-
-                  {/* Clinical Archives */}
-                  <motion.div variants={itemVariants} className="flex-1">
-                    <ReportsList reports={reports.slice(0, 5)} loading={loadingReports} />
-                  </motion.div>
-                </div>
               </div>
-            </div>
-          )}
+            )}
 
             {activeTab === 'reports' && (
               <div className="space-y-8">
@@ -243,11 +230,12 @@ export default function PatientDashboard() {
               </motion.div>
             )}
 
-            {activeTab === 'emergency' && (
+            {activeTab === 'notes' && (
               <motion.div variants={itemVariants}>
-                <EmergencyQR onToast={(msg) => showToast(msg)} />
+                <PatientNotesList />
               </motion.div>
             )}
+
           </motion.div>
         </div>
         <Footer />
@@ -257,17 +245,6 @@ export default function PatientDashboard() {
       {toast && <AlertBanner message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <HackathonNudgeSystem healthScore={healthScore} />
       
-      {/* Mandatory Emergency Contacts Modal */}
-      {showEmergencyModal && (
-        <EmergencyContactModal 
-          patientId={patientId} 
-          onSuccess={() => {
-            setShowEmergencyModal(false);
-            showToast("Emergency vectors synchronized successfully.");
-            refreshData(); // Re-verify and update profile state
-          }} 
-        />
-      )}
     </div>
 
   );

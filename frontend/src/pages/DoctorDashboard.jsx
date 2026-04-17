@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Key, FilePlus, Activity, ClipboardList, BarChart3 } from 'lucide-react';
+import { Users, Key, FilePlus, Activity, ClipboardList, BarChart3, MessageSquare } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
@@ -8,6 +8,7 @@ import PatientSearch from '../components/doctor/PatientSearch';
 import PatientTimeline from '../components/doctor/PatientTimeline';
 import AccessRequest from '../components/doctor/AccessRequest';
 import PrescriptionForm from '../components/doctor/PrescriptionForm';
+import PatientNotesForm from '../components/doctor/PatientNotesForm';
 import ReportAnalysis from '../components/doctor/ReportAnalysis';
 import DashboardStats from '../components/patient/DashboardStats';
 import AlertBanner from '../components/shared/AlertBanner';
@@ -20,6 +21,7 @@ const menuItems = [
   { id: 'patients', label: 'My Patients', icon: Users },
   { id: 'access', label: 'Request Access', icon: Key },
   { id: 'prescriptions', label: 'Prescriptions', icon: FilePlus },
+  { id: 'notes', label: 'Notes', icon: MessageSquare },
   { id: 'analysis', label: 'Report Analysis', icon: ClipboardList },
 ];
 
@@ -66,8 +68,8 @@ export default function DoctorDashboard() {
       <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar items={menuItems} activeTab={activeTab} setActiveTab={setActiveTab} role="doctor" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className="flex-1 pt-16 lg:pl-60">
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 pt-16 lg:pl-60 flex flex-col">
+        <div className="p-4 md:p-6 lg:p-8 w-full max-w-[1600px] mx-auto space-y-6 flex-1">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             {activeTab === 'overview' && (
               <div className="space-y-6">
@@ -149,6 +151,7 @@ export default function DoctorDashboard() {
 
             {activeTab === 'access' && <AccessRequest onToast={showToast} />}
             {activeTab === 'prescriptions' && <PrescriptionForm patientId={selectedPatient || 'patient_123'} onToast={showToast} />}
+            {activeTab === 'notes' && <PatientNotesForm onToast={showToast} />}
             {activeTab === 'analysis' && <ReportAnalysis />}
           </motion.div>
         </div>

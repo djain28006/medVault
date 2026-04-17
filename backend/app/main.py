@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List, Any
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-from .routes import patient, doctor, emergency
+from .routes import patient, doctor
 from .dependencies import get_current_user
 from .services.db_service import db_service
 
@@ -25,8 +25,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 
 app = FastAPI(title="Healthcare API", version="1.0.0")
 
-# Serve static files for the Emergency PDF
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +36,6 @@ app.add_middleware(
 
 app.include_router(patient.router)
 app.include_router(doctor.router)
-app.include_router(emergency.router)
 
 
 

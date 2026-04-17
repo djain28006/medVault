@@ -29,7 +29,7 @@ export default function HealthScoreCard({ score = 0, factors = [], summary = nul
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="glass-morphism p-6 md:p-8 relative overflow-hidden h-full flex flex-col font-sans border-white/[0.08] shadow-2xl group smooth-transition"
+      className="glass-morphism p-6 md:p-8 relative overflow-hidden h-full flex flex-col font-sans border-white/[0.08] shadow-2xl group smooth-transition min-w-0"
     >
       {/* Dynamic Background Glows */}
       <div className={`absolute -right-20 -top-20 w-80 h-80 rounded-full blur-[120px] opacity-20 animate-pulse smooth-transition ${cat.bg.replace('/10', '/30')}`} />
@@ -45,7 +45,7 @@ export default function HealthScoreCard({ score = 0, factors = [], summary = nul
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row items-center gap-12 mb-10 relative z-10">
+      <div className="flex flex-col md:flex-row items-center gap-8 mb-10 relative z-10">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ opacity: 1, scale: 1 }} 
@@ -56,7 +56,7 @@ export default function HealthScoreCard({ score = 0, factors = [], summary = nul
           <GaugeChart value={score} size={220} />
         </motion.div>
 
-        <div className="flex-1 space-y-8 w-full">
+        <div className="flex-1 space-y-6 w-full min-w-0 overflow-hidden">
           <div className="flex flex-wrap gap-2.5">
             {factors.map((f, i) => (
               <span key={i} className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:border-brand-500/40 hover:bg-white/[0.06] hover:text-slate-200 transition-all cursor-default">
@@ -65,7 +65,7 @@ export default function HealthScoreCard({ score = 0, factors = [], summary = nul
             ))}
           </div>
 
-          <div className="p-6 bg-brand-500/[0.03] rounded-[2rem] border border-brand-500/10 backdrop-blur-2xl hover:bg-white/[0.05] hover:border-brand-500/20 transition-all group/ai relative overflow-hidden">
+          <div className="p-5 bg-brand-500/[0.03] rounded-2xl border border-brand-500/10 backdrop-blur-2xl hover:bg-white/[0.05] hover:border-brand-500/20 transition-all group/ai relative overflow-hidden">
             <div className={`absolute top-0 left-0 w-1.5 h-full transition-colors duration-500 ${cat.color.replace('text-', 'bg-')}/40`} />
             <div className="flex items-center gap-3 mb-3 px-1">
               <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400">

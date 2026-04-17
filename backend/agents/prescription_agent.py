@@ -40,7 +40,7 @@ class PrescriptionAgent:
                 "drug": med.get("drug", "Unknown"),
                 "dosage": med.get("dosage", "As directed"),
                 "frequency": med.get("frequency", "Daily"),
-                "duration": med.get("duration", ""),
+                "durationDays": int(med.get("durationDays", 0)),
                 "time_slots": slots,
                 "m_id": m_id
             })
@@ -49,7 +49,9 @@ class PrescriptionAgent:
             "prescriptionId": f"rx_{uuid.uuid4().hex[:6]}",
             "patientId": data.get("patientId"),
             "doctorId": data.get("doctorId", "AI_AGENT_EXTRACTION"),
+            "doctorName": data.get("doctorName", "Doctor"),
             "date": datetime.now().isoformat(),
+            "diagnosis": data.get("diagnosis", ""),
             "medications": structured_meds,
             "status": "active"
         }

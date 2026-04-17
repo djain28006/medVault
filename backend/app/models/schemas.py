@@ -23,11 +23,12 @@ class Medication(BaseModel):
     drug: str
     dosage: str
     frequency: str
-    duration: str
+    durationDays: int
 
 class PrescriptionCreateReq(BaseModel):
-    patientId: str
+    patientEmail: str
     doctorId: str
+    diagnosis: Optional[str] = None
     medications: List[Medication]
 
 class HealthScoreResponse(BaseModel):
@@ -59,3 +60,9 @@ class PatientNoteCreateReq(BaseModel):
     content: str
     category: Optional[str] = "observation" # allergy, medication, observation, diagnosis, follow-up, warning
     tags: Optional[List[str]] = []
+
+class PatientNoteEmailReq(BaseModel):
+    patientEmail: str
+    title: str
+    content: str
+    category: Optional[str] = "observation"

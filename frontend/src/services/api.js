@@ -54,8 +54,6 @@ export const api = {
   grantAccess: (patientId, doctorId) =>
     apiClient.post(`/api/patient/grant-access?patientId=${patientId}&doctorId=${doctorId}`),
 
-  generateQR: (patientId) =>
-    apiClient.post(`/api/patient/generate-emergency-qr?patientId=${patientId}`),
 
   getMedications: (patientId) =>
     apiClient.get(`/api/patient/medications/${patientId}`),
@@ -100,15 +98,11 @@ export const api = {
   createPatientNote: (data) =>
     apiClient.post('/api/doctor/patient-note', data),
 
+  createPatientNoteByEmail: (data) =>
+    apiClient.post('/api/doctor/create-note-email', data),
+
   getDoctorPatientNotes: (patientId) =>
     apiClient.get(`/api/doctor/patient-notes/${patientId}`),
-
-  // Emergency endpoints (no auth required)
-  scanQR: (data) =>
-    apiClient.post('/api/emergency/scan-qr', data),
-
-  getCriticalInfo: (patientId) =>
-    apiClient.get(`/api/emergency/critical-info/${patientId}`),
 
   register: (role = 'patient', email = null) =>
     apiClient.post('/api/auth/register', { role, email }),
