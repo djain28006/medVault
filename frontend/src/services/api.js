@@ -110,6 +110,9 @@ export const api = {
   getDoctorPatientNotes: (patientId) =>
     apiClient.get(`/api/doctor/patient-notes/${patientId}`),
 
+  getRecentActivity: () =>
+    apiClient.get('/api/doctor/recent-activity'),
+
   register: (role = 'patient', email = null) =>
     apiClient.post('/api/auth/register', { role, email }),
 };

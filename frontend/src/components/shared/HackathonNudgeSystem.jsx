@@ -20,7 +20,7 @@ export default function HackathonNudgeSystem({ healthScore }) {
   const [logs, setLogs] = useState([]);
   const [lastProcessedTime, setLastProcessedTime] = useState(Date.now());
   
-  const NUDGE_INTERVAL = 45 * 1000; 
+  const NUDGE_INTERVAL = 300 * 1000; // 5 Minutes cycle for clinical audit
   const medTimerRef = useRef(null);
 
   const addLog = (msg) => {
@@ -108,7 +108,7 @@ export default function HackathonNudgeSystem({ healthScore }) {
   }, [currentUser]);
 
   const triggerNudge = (nudgeData) => {
-    setActiveNudge(nudgeData);
+    // setActiveNudge(nudgeData); // Deactivated visual interruption per user request
     
     // Also push to the real Notification Center
     notify({

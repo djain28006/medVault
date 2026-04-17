@@ -15,8 +15,6 @@ export default function NotificationCenter() {
         ...e.detail
       };
       setNotifications(prev => [newNotif, ...prev].slice(0, 10));
-      // Auto-open on any new alert
-      setIsOpen(true);
     };
 
     window.addEventListener('app-notification', handleNotification);

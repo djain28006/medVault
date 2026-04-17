@@ -189,6 +189,7 @@ class AgentService:
                 data["doctorName"] = "Dr. Doctor"
 
         rx = self.prescription_agent.create_prescription(data)
+        rx["doctorId"] = data.get("doctorId") # Force ownership binding
         db_service.save_prescription(rx)
         return rx
 

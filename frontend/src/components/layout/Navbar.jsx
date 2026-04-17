@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, Bell, LogOut, Menu } from 'lucide-react';
+import { ShieldPlus, Bell, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import NotificationCenter from '../shared/NotificationCenter';
 
@@ -18,9 +18,9 @@ export default function Navbar({ onMenuToggle }) {
           <button onClick={onMenuToggle} className="lg:hidden p-2 hover:bg-white/[0.06] rounded-lg transition-colors">
             <Menu className="w-5 h-5 text-slate-300" />
           </button>
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
-              <Activity className="w-4 h-4 text-white" />
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/10 border border-white/5 overflow-hidden transition-all group-hover:scale-110 group-hover:border-brand-500/30">
+              <img src="/logo-icon.png" alt="MedVault" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-display font-bold text-white hidden sm:block">
               Med<span className="text-brand-400">Vault</span>

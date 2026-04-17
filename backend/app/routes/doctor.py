@@ -106,3 +106,51 @@ def get_patient_notes(patientId: str, current_user: dict = Depends(require_docto
 
     notes = db_service.get_patient_notes(patientId)
     return {"notes": notes}
+
+@router.get("/recent-activity")
+def get_recent_activity(current_user: dict = Depends(require_doctor)):
+    doctor_id = current_user["uid"]
+    activity = []
+    
+    # 1. Fetch Prescriptions (Independent)
+    try:
+        prescriptions = db_service.get_doctor_prescriptions(doctor_id)
+        print(f"[ActivitySync] Found {len(prescriptions)} prescriptions")
+        for rx in prescriptions:
+            ts = rx.get("createdAt") or rx.get("date")
+            activity.append({
+                "id": rx.get("prescriptionId"),
+                "type": "prescription",
+                "patientId": rx.get("patientId"),
+                "patientName": rx.get("patientName", "Unknown Patient"),
+                "timestamp": ts,
+                "details": rx.get("medications", []),
+                "summary": f"Prescribed {len(rx.get('medications', []))} medications"
+            })
+    except Exception as e:
+        print(f"[ActivitySync Error] Prescriptions Query Failed: {e}")
+
+    # 2. Fetch Clinical Notes (Independent - Sensitive to Indexing)
+    try:
+        notes = db_service.get_doctor_clinical_notes(doctor_id)
+        print(f"[ActivitySync] Found {len(notes)} clinical notes")
+        for note in notes:
+            activity.append({
+                "id": note.get("noteId"),
+                "type": "note",
+                "patientId": note.get("patientId"),
+                "patientName": note.get("patientName", "Unknown Patient"),
+                "timestamp": note.get("timestamp") or note.get("createdAt"),
+                "details": note.get("content", ""),
+                "summary": note.get("title", "Clinical Note")
+            })
+    except Exception as e:
+        print(f"[ActivitySync Warning] Clinical Notes query failed. This is expected if the index is still building. Error: {e}")
+
+    # 3. Sort and Return
+    try:
+        activity.sort(key=lambda x: x.get('timestamp', '') or '', reverse=True)
+        return {"activity": activity[:25]}
+    except Exception as e:
+        print(f"[ActivitySync Error] Final result aggregation failed: {e}")
+        return {"activity": [], "error": "Sort failed"}

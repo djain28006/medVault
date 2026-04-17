@@ -5,7 +5,6 @@ import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import PatientSearch from '../components/doctor/PatientSearch';
-import PatientTimeline from '../components/doctor/PatientTimeline';
 import AccessRequest from '../components/doctor/AccessRequest';
 import PrescriptionForm from '../components/doctor/PrescriptionForm';
 import PatientNotesForm from '../components/doctor/PatientNotesForm';
@@ -53,6 +52,8 @@ export default function DoctorDashboard() {
     } catch { showToast('Failed to load patient summary', 'error'); }
     finally { setLoadingSummary(false); }
   };
+
+
 
   const statCards = [
     { label: 'Active Patients', value: 3, icon: Users, iconBg: 'bg-brand-500/10', iconColor: 'text-brand-400' },
@@ -128,7 +129,8 @@ export default function DoctorDashboard() {
                         </div>
                       )}
                     </div>
-                    <PatientTimeline />
+                    
+
                   </>
                 ) : (
                   <PatientDetailView 
@@ -142,7 +144,6 @@ export default function DoctorDashboard() {
             {activeTab === 'patients' && (
               <div className="space-y-6">
                 <PatientSearch onSelect={handlePatientSelect} />
-                <PatientTimeline />
               </div>
             )}
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserCircle2, Stethoscope, ArrowRight, ShieldAlert } from 'lucide-react';
+import { UserCircle2, Stethoscope, ArrowRight, ShieldAlert, ShieldPlus } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -18,8 +18,14 @@ export default function Landing() {
             <span className="text-xs font-semibold text-success tracking-widest uppercase">Agent Active</span>
           </div>
           
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 bg-slate-900 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-brand-500/20 border border-white/5 overflow-hidden">
+              <img src="/logo-icon.png" alt="MedVault" className="w-full h-full object-cover" />
+            </div>
+          </div>
+          
           <h1 className="text-5xl lg:text-7xl font-display font-bold text-text-primary tracking-tight mb-4">
-            Medi<span className="text-primary">Agent</span>
+            Med<span className="text-primary">Vault</span>
           </h1>
           <h2 className="text-2xl text-text-secondary font-medium mb-8">AI-Powered Healthcare Platform</h2>
           

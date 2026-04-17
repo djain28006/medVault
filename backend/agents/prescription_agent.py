@@ -51,6 +51,7 @@ class PrescriptionAgent:
             "doctorId": data.get("doctorId", "AI_AGENT_EXTRACTION"),
             "doctorName": data.get("doctorName", "Doctor"),
             "date": datetime.now().isoformat(),
+            "createdAt": datetime.now().isoformat(),
             "diagnosis": data.get("diagnosis", ""),
             "medications": structured_meds,
             "status": "active"

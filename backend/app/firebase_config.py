@@ -38,31 +38,31 @@ if not firebase_admin._apps:
         if os.path.exists(abs_cert_path):
             try:
                 cred = credentials.Certificate(abs_cert_path)
-                print(f"🔥 Firebase initialized via credentials: {abs_cert_path}")
+                print(f"Firebase initialized via credentials: {abs_cert_path}")
             except Exception as e:
-                print(f"❌ ERROR: Failed to initialize via local file {abs_cert_path}: {e}")
+                print(f"ERROR: Failed to initialize via local file {abs_cert_path}: {e}")
         else:
-            print(f"⚠️  WARNING: Firebase credentials file not found at {abs_cert_path}")
+            print(f"WARNING: Firebase credentials file not found at {abs_cert_path}")
     
     # 3. Final Initialization or Fail-Fast
     if cred:
         firebase_admin.initialize_app(cred, {
             'storageBucket': bucket_name
         })
-        print("✅ Firebase Admin Initialized Successfully!")
+        print("Firebase Admin Initialized Successfully!")
     elif is_production:
         # STRICT RULE: Fail-fast in production to prevent insecure database bypass
         raise RuntimeError("FATAL: Incomplete Firebase credentials on Render. Production environment secured — refusal to start without valid Auth.")
     else:
         # Allow bypass for local dev early prototyping
-        print("❌ WARNING: No valid Firebase credentials found. Running in localized bypass mode. Data will NOT be live.")
+        print("WARNING: No valid Firebase credentials found. Running in localized bypass mode. Data will NOT be live.")
 
 # Export initialized services
 db = firestore.client() if firebase_admin._apps else None
 if db:
-    print("📂 Firestore Client Connected.")
+    print("Firestore Client Connected.")
 else:
-    print("🚫 Firestore Client NOT Connected.")
+    print("Firestore Client NOT Connected.")
 
 bucket = storage.bucket() if firebase_admin._apps else None
 firebase_auth = auth if firebase_admin._apps else None

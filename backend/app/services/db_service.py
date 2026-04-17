@@ -183,5 +183,16 @@ class DBService:
         notes.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         return notes
 
+    def get_doctor_prescriptions(self, doctor_id: str) -> list:
+        if not db: return []
+        docs = db.collection('prescriptions').where('doctorId', '==', doctor_id).stream()
+        return [doc.to_dict() for doc in docs]
+
+    def get_doctor_clinical_notes(self, doctor_id: str) -> list:
+        if not db: return []
+        # Requires a Collection Group Index in Firestore for 'notes'
+        docs = db.collection_group('notes').where('doctorId', '==', doctor_id).stream()
+        return [doc.to_dict() for doc in docs]
+
 db_service = DBService()
 
