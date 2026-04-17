@@ -3,21 +3,27 @@ import { motion } from 'framer-motion';
 
 function AnimatedCounter({ target, duration = 1500 }) {
   const [count, setCount] = useState(0);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    // If target is not a number (like '—'), just show it
+    // If target is not a number (like '—' or 'Calculating...'), just show it
     if (typeof target !== 'number') {
       setCount(target);
       return;
     }
 
-    let start = 0;
+    // Trigger update animation
+    setIsUpdating(true);
+    const updateTimeout = setTimeout(() => setIsUpdating(false), 1000);
+
+    let start = count === target ? target : 0; // Or keep previous count for smooth transition
     const end = parseInt(target);
     if (end === 0) {
       setCount(0);
-      return;
+      return () => clearTimeout(updateTimeout);
     }
     
+    // Smooth framer-motion approach handled in styles, so here we just count up if it's new
     const increment = end / (duration / 16);
     const timer = setInterval(() => {
       start += increment;
@@ -29,10 +35,25 @@ function AnimatedCounter({ target, duration = 1500 }) {
       }
     }, 16);
     
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(updateTimeout);
+    };
   }, [target, duration]);
 
-  return <span>{count.toLocaleString()}</span>;
+  return (
+    <motion.div
+      animate={{
+        textShadow: isUpdating ? '0px 0px 20px rgba(14, 165, 233, 0.8)' : '0px 0px 0px rgba(14, 165, 233, 0)',
+        scale: isUpdating ? 1.05 : 1,
+        color: isUpdating ? '#bae6fd' : '#ffffff' 
+      }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="inline-block"
+    >
+      {count.toLocaleString()}
+    </motion.div>
+  );
 }
 
 export default function DashboardStats({ stats }) {

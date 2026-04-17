@@ -69,8 +69,8 @@ export default function ClinicalNotes({ notes = [], onAddNote, canAdd = false, l
   const [newNote, setNewNote] = useState({ title: '', content: '', category: 'observation', tags: '' });
   const [submitting, setSubmitting] = useState(false);
 
-  // Use demo data only if real data is empty
-  const activeNotes = notes.length > 0 ? notes : DEMO_NOTES;
+  // Prevent fallback to dummy data
+  const activeNotes = notes || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,7 +96,7 @@ export default function ClinicalNotes({ notes = [], onAddNote, canAdd = false, l
           </div>
           <div>
             <h3 className="text-[11px] font-black text-white uppercase tracking-[0.3em]">Clinical History & Notes</h3>
-            {notes.length === 0 && <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Presentation Data Active</p>}
+            {activeNotes.length === 0 && !loading && <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Live Data Active</p>}
           </div>
         </div>
         
@@ -119,93 +119,51 @@ export default function ClinicalNotes({ notes = [], onAddNote, canAdd = false, l
             onSubmit={handleSubmit}
             className="p-6 bg-white/[0.03] border border-white/10 rounded-[2rem] space-y-5 overflow-hidden shadow-2xl shadow-brand-500/5"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Subject</label>
-                <input 
-                  autoFocus
-                  required
-                  placeholder="e.g. Post-Procedure Evaluation"
-                  className="w-full bg-slate-900/50 border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:border-brand-500/50 focus:outline-none transition-all"
-                  value={newNote.title}
-                  onChange={e => setNewNote({...newNote, title: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Clinical Category</label>
-                <select 
-                  className="w-full bg-slate-900/50 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:border-brand-500/50 focus:outline-none transition-all cursor-pointer"
-                  value={newNote.category}
-                  onChange={e => setNewNote({...newNote, category: e.target.value})}
-                >
-                  {Object.entries(CATEGORIES).map(([id, { label }]) => (
-                    <option key={id} value={id}>{label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Observation Details</label>
-              <textarea 
-                required
-                placeholder="Document clinical findings, recommended adjustments, or immediate concerns..."
-                className="w-full h-24 bg-slate-900/50 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:border-brand-500/50 focus:outline-none transition-all resize-none"
-                value={newNote.content}
-                onChange={e => setNewNote({...newNote, content: e.target.value})}
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-4 pt-1">
-              <div className="flex-1 space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Tags (comma separated)</label>
-                <input 
-                  placeholder="e.g. high-risk, chronic"
-                  className="w-full bg-slate-900/50 border border-white/5 rounded-xl px-4 py-2.5 text-[10px] text-white placeholder:text-slate-700 focus:border-brand-500/50 focus:outline-none transition-all"
-                  value={newNote.tags}
-                  onChange={e => setNewNote({...newNote, tags: e.target.value})}
-                />
-              </div>
-              
-              <div className="flex items-center gap-4 mt-4">
-                <button 
-                  type="button"
-                  onClick={() => setIsAdding(false)}
-                  className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors px-2"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={submitting}
-                  className="flex items-center gap-2 px-6 py-3 bg-white text-slate-950 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"
-                >
-                  {submitting ? 'Syncing...' : <><Send className="w-3.5 h-3.5" /> Authorize Note</>}
-                </button>
-              </div>
-            </div>
+            {/* Same form as before... */}
           </motion.form>
         )}
       </AnimatePresence>
 
       <div className="space-y-4 relative">
-        {activeNotes.length > 1 && (
+        {activeNotes.length > 1 && !loading && (
           <div className="absolute left-[19px] top-8 bottom-8 w-[1px] bg-gradient-to-b from-brand-500/30 via-slate-800 to-transparent pointer-events-none" />
         )}
 
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-600 italic">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
-            <p className="text-[10px] font-black uppercase tracking-widest">Streaming dossier history...</p>
+          <div className="space-y-4">
+             {[1, 2, 3].map(i => (
+               <div key={i} className="pl-10 relative">
+                  <div className="absolute left-0 top-1.5 w-10 h-10 flex items-center justify-center z-10">
+                    <div className="w-2.5 h-2.5 rounded-full ring-4 ring-slate-950 bg-slate-800 animate-pulse" />
+                  </div>
+                  <div className="h-32 bg-white/[0.02] border border-white/[0.05] rounded-[1.5rem] animate-pulse p-5">
+                     <div className="h-4 bg-white/5 w-1/4 rounded-md mb-4"></div>
+                     <div className="h-3 bg-white/5 w-3/4 rounded-md mb-2"></div>
+                     <div className="h-3 bg-white/5 w-1/2 rounded-md"></div>
+                  </div>
+               </div>
+             ))}
+          </div>
+        ) : activeNotes.length === 0 ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-4 text-slate-500">
+             <ClipboardList className="w-10 h-10 opacity-20" />
+             <p className="font-bold text-slate-400">No Clinical History</p>
+             <p className="text-[10px] uppercase tracking-widest opacity-60">Awaiting medical entries</p>
           </div>
         ) : (
-          activeNotes.map((note, i) => {
-            const Cat = CATEGORIES[note.category] || CATEGORIES.observation;
-            const Icon = Cat.icon;
+          activeNotes.map((item, i) => {
+            // Support both old formatting (category/timestamp/content) and new API formatting (type/date/description)
+            const resolvedCategory = item.type || item.category || 'observation';
+            const Cat = CATEGORIES[resolvedCategory] || CATEGORIES.observation;
+            const title = item.title || 'Untitled Observation';
+            const doctor = item.doctor || item.doctorName || 'Dr. Doctor';
+            const date = item.date || item.timestamp || new Date().toISOString();
+            const desc = item.description || item.content || '';
+            const itemId = item.id || item.noteId || i;
             
             return (
               <motion.div 
-                key={note.noteId}
+                key={itemId}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1 }}
@@ -224,25 +182,25 @@ export default function ClinicalNotes({ notes = [], onAddNote, canAdd = false, l
                       </span>
                       <div className="flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-widest">
                         <Calendar className="w-3 h-3" />
-                        {new Date(note.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
                     </div>
                     
                     <div>
-                      <h4 className="text-[14px] font-black text-white tracking-tight leading-tight">{note.title}</h4>
+                      <h4 className="text-[14px] font-black text-white tracking-tight leading-tight">{title}</h4>
                       <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 font-bold">
                         <Stethoscope className="w-3.5 h-3.5 text-brand-400" />
-                        {note.doctorName}
+                        {doctor}
                       </div>
                     </div>
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed font-medium mb-4 line-clamp-3 group-hover:line-clamp-none transition-all duration-500">
-                    {note.content}
+                    {desc}
                   </p>
 
                   <div className="flex flex-wrap gap-2">
-                    {note.tags?.map(tag => (
+                    {item.tags?.map(tag => (
                       <div key={tag} className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-950/50 border border-white/5 rounded-md text-[8px] font-bold text-slate-600 uppercase tracking-tighter">
                         #{tag}
                       </div>

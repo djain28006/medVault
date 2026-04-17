@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { auth } from '../firebase/config';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8005';
 
 
 const apiClient = axios.create({ baseURL: API_BASE });
@@ -78,6 +78,12 @@ export const api = {
 
   getPatientDoctorNotes: (patientId) =>
     apiClient.get(`/api/patient/doctor-notes/${patientId}`),
+
+  getDashboardSummary: (patientId) =>
+    apiClient.get(`/api/patient/dashboard-summary/${patientId}`),
+
+  getClinicalHistory: (patientId) =>
+    apiClient.get(`/api/patient/clinical-history/${patientId}`),
 
   // Doctor endpoints
   requestAccess: (data) =>

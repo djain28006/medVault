@@ -9,7 +9,6 @@ import PatientTimeline from '../components/doctor/PatientTimeline';
 import AccessRequest from '../components/doctor/AccessRequest';
 import PrescriptionForm from '../components/doctor/PrescriptionForm';
 import PatientNotesForm from '../components/doctor/PatientNotesForm';
-import ReportAnalysis from '../components/doctor/ReportAnalysis';
 import DashboardStats from '../components/patient/DashboardStats';
 import AlertBanner from '../components/shared/AlertBanner';
 import { api } from '../services/api';
@@ -22,7 +21,6 @@ const menuItems = [
   { id: 'access', label: 'Request Access', icon: Key },
   { id: 'prescriptions', label: 'Prescriptions', icon: FilePlus },
   { id: 'notes', label: 'Notes', icon: MessageSquare },
-  { id: 'analysis', label: 'Report Analysis', icon: ClipboardList },
 ];
 
 import PatientDetailView from '../components/doctor/PatientDetailView';
@@ -60,7 +58,6 @@ export default function DoctorDashboard() {
     { label: 'Active Patients', value: 3, icon: Users, iconBg: 'bg-brand-500/10', iconColor: 'text-brand-400' },
     { label: 'Prescriptions Issued', value: 12, icon: FilePlus, iconBg: 'bg-success-500/10', iconColor: 'text-success-400' },
     { label: 'Pending Requests', value: 1, icon: Key, iconBg: 'bg-warning-500/10', iconColor: 'text-warning-400' },
-    { label: 'Reports Analyzed', value: 28, icon: Activity, iconBg: 'bg-purple-500/10', iconColor: 'text-purple-400' },
   ];
 
   return (
@@ -152,7 +149,6 @@ export default function DoctorDashboard() {
             {activeTab === 'access' && <AccessRequest onToast={showToast} />}
             {activeTab === 'prescriptions' && <PrescriptionForm patientId={selectedPatient || 'patient_123'} onToast={showToast} />}
             {activeTab === 'notes' && <PatientNotesForm onToast={showToast} />}
-            {activeTab === 'analysis' && <ReportAnalysis />}
           </motion.div>
         </div>
         <Footer />

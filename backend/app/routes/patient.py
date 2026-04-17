@@ -146,3 +146,43 @@ def get_doctor_notes(patientId: str, current_user: dict = Depends(get_current_us
         
     notes = db_service.get_patient_notes(patientId)
     return {"notes": notes}
+
+@router.get("/dashboard-summary/{patientId}")
+def get_dashboard_summary(patientId: str, current_user: dict = Depends(get_current_user)):
+    # Count reports
+    reports = db_service.get_patient_reports(patientId)
+    
+    # Get health score without triggering an LLM agent
+    health_score_doc = db_service.get_health_score(patientId)
+    score = health_score_doc.get("score") if health_score_doc else None
+
+    # Count medications
+    prescriptions = db_service.get_patient_prescriptions(patientId)
+    active_meds = sum(len(rx.get("medications", [])) for rx in prescriptions)
+
+    # Count access grants
+    grants = db_service.get_patient_grants(patientId)
+
+    return {
+        "total_reports": len(reports),
+        "health_score": score,
+        "active_meds": active_meds,
+        "access_grants": len(grants)
+    }
+
+@router.get("/clinical-history/{patientId}")
+def get_clinical_history(patientId: str, current_user: dict = Depends(get_current_user)):
+    notes = db_service.get_patient_notes(patientId)
+    import uuid
+    history = []
+    for n in notes:
+        history.append({
+            "id": n.get("noteId", uuid.uuid4().hex),
+            "type": n.get("category", "diagnosis"),
+            "title": n.get("title", "Clinical Note"),
+            "doctor": n.get("doctorName", "Unknown"),
+            "description": n.get("content", ""),
+            "tags": [n.get("category", "General")],
+            "date": n.get("timestamp", n.get("createdAt", ""))
+        })
+    return history

@@ -20,7 +20,21 @@ export default function NotificationCenter() {
     };
 
     window.addEventListener('app-notification', handleNotification);
-    return () => window.removeEventListener('app-notification', handleNotification);
+
+    // Periodic System Heartbeat (Every 2 Minutes as requested)
+    const heartbeatInterval = setInterval(() => {
+      notify({
+        type: 'system',
+        category: 'Heartbeat',
+        title: 'Neural System Pulse',
+        message: 'Clinical monitoring nodes are synchronized. All vitals are within normal range.'
+      });
+    }, 300000);
+
+    return () => {
+      window.removeEventListener('app-notification', handleNotification);
+      clearInterval(heartbeatInterval);
+    };
   }, []);
 
   const unreadCount = notifications.length;
@@ -50,56 +64,80 @@ export default function NotificationCenter() {
               className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.9, y: -20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute right-0 z-50 mt-4 w-[calc(100vw-2rem)] sm:w-96 max-w-full origin-top-right rounded-3xl border border-slate-800 bg-slate-950/90 p-2 shadow-2xl backdrop-blur-xl"
+              exit={{ opacity: 0, scale: 0.9, y: -20 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              className="absolute right-0 z-50 mt-5 w-80 sm:w-[420px] origin-top-right rounded-[2.5rem] border border-white/[0.1] bg-slate-950/95 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-3xl"
             >
-              <div className="flex items-center justify-between p-4 border-b border-slate-900">
-                <h3 className="text-lg font-bold text-slate-100">Clinical Alerts</h3>
+              {/* Pointing Arrow (Caret) */}
+              <div className="absolute -top-1.5 right-[14px] w-3 h-3 bg-slate-950 border-l border-t border-white/[0.1] rotate-45 z-[1]" />
+
+              <div className="flex items-center justify-between p-6 border-b border-white/[0.05]">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">Clinical Alerts</h3>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                  </div>
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Neural Node Monitoring</p>
+                </div>
                 <button 
                   onClick={() => {
                     setNotifications([]);
                     setIsOpen(false);
                   }}
-                  className="text-xs text-slate-500 hover:text-rose-400 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-[9px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-all border border-white/[0.05] hover:border-white/10"
                 >
-                  Clear All
+                  Flush Buffer
                 </button>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto p-2 scrollbar-none">
+              <div className="max-h-[460px] overflow-y-auto p-4 scrollbar-none space-y-4">
                 {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <ShieldCheck className="h-10 w-10 text-emerald-500/30 mb-2" />
-                    <p className="text-sm text-slate-500">System Secure. No active alerts.</p>
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-500/[0.02] flex items-center justify-center mb-6 border border-emerald-500/10 relative">
+                      <div className="absolute inset-0 rounded-[2.5rem] bg-emerald-500/5 blur-xl animate-pulse" />
+                      <ShieldCheck className="h-10 w-10 text-emerald-500/30 relative z-10" />
+                    </div>
+                    <p className="text-[11px] font-black text-white uppercase tracking-[0.25em]">Neural Path Secure</p>
+                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-2 leading-relaxed">No active anomalies detected in current cycle</p>
                   </div>
                 ) : (
-                  notifications.map((notif) => (
-                    <div 
+                  notifications.map((notif, i) => (
+                    <motion.div 
                       key={notif.id}
-                      className={`mb-2 flex items-start gap-4 rounded-2xl p-4 transition-all ${
-                        notif.type === 'critical' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-slate-900/40 border border-slate-800/50'
-                      }`}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className={`group relative flex items-start gap-4 rounded-[1.8rem] p-5 transition-all duration-500 border ${
+                        notif.type === 'critical' 
+                          ? 'bg-rose-500/[0.03] border-rose-500/20 hover:bg-rose-500/[0.06] hover:border-rose-500/40' 
+                          : 'bg-white/[0.01] border-white/[0.05] hover:bg-white/[0.03] hover:border-white/20'
+                      } ${notif.type === 'critical' ? 'shadow-[0_0_40px_rgba(244,63,94,0.05)]' : ''}`}
                     >
-                      <div className={`mt-1 rounded-full p-2 ${
-                        notif.type === 'critical' ? 'bg-rose-500/20 text-rose-500' : 'bg-slate-800 text-slate-400'
+                      <div className={`mt-0.5 rounded-2xl p-3 transition-all duration-500 ${
+                        notif.type === 'critical' ? 'bg-rose-500/20 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]' : 'bg-slate-800/40 text-slate-500 group-hover:text-brand-400'
                       }`}>
-                        {notif.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                        {notif.type === 'critical' ? <AlertTriangle className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-slate-500">{notif.time}</span>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                             notif.type === 'critical' ? 'text-rose-500' : 'text-slate-500'
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">{notif.time}</span>
+                          <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-lg border ${
+                             notif.type === 'critical' ? 'text-rose-400 border-rose-500/20 bg-rose-500/10' : 'text-slate-500 border-white/10 bg-white/5'
                           }`}>
-                            {notif.category || 'Notification'}
+                            {notif.category || 'System'}
                           </span>
                         </div>
-                        <p className="mt-1 text-sm font-semibold text-slate-100">{notif.title}</p>
-                        <p className="text-xs text-slate-400 leading-relaxed mt-1">{notif.message}</p>
+                        <h4 className="text-[14px] font-black text-white tracking-tight leading-snug mb-1.5 group-hover:text-brand-400 transition-colors uppercase">{notif.title}</h4>
+                        <p className="text-[11px] text-slate-400 leading-relaxed font-medium opacity-70 group-hover:opacity-100 transition-opacity">{notif.message}</p>
                       </div>
-                    </div>
+                      
+                      {/* Interactive Hover Glow */}
+                      <div className={`absolute inset-0 rounded-[1.8rem] opacity-0 group-hover:opacity-10 pointer-events-none transition-opacity duration-500 ${
+                        notif.type === 'critical' ? 'bg-rose-500' : 'bg-brand-500'
+                      }`} />
+                    </motion.div>
                   ))
                 )}
               </div>

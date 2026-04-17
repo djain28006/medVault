@@ -65,55 +65,44 @@ export default function PatientDashboard() {
   const [profile, setProfile] = useState(null);
 
 
+  const [dashboardSummary, setDashboardSummary] = useState(null);
+  const [clinicalHistory, setClinicalHistory] = useState([]);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+
   useEffect(() => {
-    console.log("PatientDashboard: Initializing with patientId:", patientId);
-    if (!patientId) {
-      console.warn("PatientDashboard: No patientId available. Auth state:", currentUser);
-      return;
-    }
-    
-    // Lazy sync profile to ensure email lookup works for doctors
+    if (!patientId) return;
+
     const syncProfile = async () => {
-      try {
-        console.log("PatientDashboard: Syncing profile...");
-        await api.register('patient', currentUser?.email);
-      } catch (e) {
-        console.warn("Profile sync failed:", e);
-      }
+      try { await api.register('patient', currentUser?.email); } 
+      catch (e) { console.warn("Profile sync failed:", e); }
     };
     
     syncProfile();
     refreshData();
+
+    // Auto Refresh (Real-Time Feel)
+    const intervalId = setInterval(refreshData, 10000);
+    return () => clearInterval(intervalId);
   }, [patientId]);
 
   const refreshData = async () => {
-    console.log("PatientDashboard: refreshData triggered for:", patientId);
-    setLoadingScore(true);
-    setLoadingReports(true);
-    setLoadingSummary(true);
-    setLoadingNotes(true);
-
     try {
       // Parallel fetch for speed
-      console.log("PatientDashboard: Starting parallel fetch...");
-      const [scoreRes, reportsRes, medsRes, summaryRes, vitalsRes, profileRes, notesRes] = await Promise.all([
-        api.getHealthScore(patientId),
+      const [summaryAPIRes, historyAPIRes, scoreRes, reportsRes, medsRes, summaryRes, vitalsRes, profileRes, notesRes] = await Promise.all([
+        api.getDashboardSummary(patientId),
+        api.getClinicalHistory(patientId),
+        api.getHealthScore(patientId), // Still needed for factors & detail popups
         api.getMyReports(patientId),
         api.getMedications(patientId),
         api.getPatientSummary(patientId),
         api.getVitals(patientId),
         api.getProfile(patientId),
-        api.getPatientDoctorNotes(patientId)
+        api.getPatientDoctorNotes(patientId) // Still used by full notes tab
       ]);
-      
-      console.log("PatientDashboard: Fetch success. Results:", { 
-        score: scoreRes.data, 
-        reports: reportsRes.data.reports?.length, 
-        meds: medsRes.data.medications?.length,
-        notes: notesRes.data.notes?.length,
-        profileFound: !!profileRes.data
-      });
 
+      setDashboardSummary(summaryAPIRes.data);
+      setClinicalHistory(historyAPIRes.data);
+      
       setHealthScore(scoreRes.data);
       setReports(reportsRes.data.reports || []);
       setMedications(medsRes.data.medications || []);
@@ -122,11 +111,14 @@ export default function PatientDashboard() {
       setProfile(profileRes.data);
       setDoctorNotes(notesRes.data.notes || []);
 
-      // Emergency feature was removed, no longer checking contacts.
-
     } catch (err) {
       console.error("Dashboard data fetch error:", err);
+      // Only show toast if it's not a silent background refresh failure
+      if (loadingDashboard) {
+          showToast("Unable to fetch data", "error");
+      }
     } finally {
+      setLoadingDashboard(false);
       setLoadingScore(false);
       setLoadingReports(false);
       setLoadingSummary(false);
@@ -135,14 +127,14 @@ export default function PatientDashboard() {
     }
   };
 
-  const statCards = [
-    { label: 'Total Reports', value: reports.length, icon: FileText, iconBg: 'bg-brand-500/10', iconColor: 'text-brand-400' },
-    { label: 'Health Score', value: healthScore?.score ?? '—', icon: Activity, iconBg: 'bg-success-500/10', iconColor: 'text-success-400', sub: healthScore?.category },
-    { label: 'Active Meds', value: medications.length, icon: Pill, iconBg: 'bg-purple-500/10', iconColor: 'text-purple-400' },
-    { label: 'Access Grants', value: 2, icon: Shield, iconBg: 'bg-warning-500/10', iconColor: 'text-warning-400' },
-  ];
-
   const showToast = (msg, type = 'success') => setToast({ message: msg, type });
+
+  const statCards = [
+    { label: 'Total Reports', value: dashboardSummary?.total_reports ?? 0, icon: FileText, iconBg: 'bg-brand-500/10', iconColor: 'text-brand-400' },
+    { label: 'Health Score', value: healthScore === null && loadingScore ? 'Calculating...' : (dashboardSummary?.health_score ?? '—'), icon: Activity, iconBg: 'bg-success-500/10', iconColor: 'text-success-400', sub: healthScore?.category },
+    { label: 'Active Meds', value: dashboardSummary?.active_meds ?? 0, icon: Pill, iconBg: 'bg-purple-500/10', iconColor: 'text-purple-400' },
+    { label: 'Access Grants', value: dashboardSummary?.access_grants ?? 0, icon: Shield, iconBg: 'bg-warning-500/10', iconColor: 'text-warning-400' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
@@ -178,8 +170,8 @@ export default function PatientDashboard() {
                     <motion.div variants={itemVariants}>
                       <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 shadow-2xl shadow-brand-500/5">
                         <ClinicalNotes 
-                          notes={doctorNotes} 
-                          loading={loadingNotes} 
+                          notes={clinicalHistory} 
+                          loading={loadingDashboard} 
                           canAdd={false} 
                         />
                       </div>
