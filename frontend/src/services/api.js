@@ -3,6 +3,11 @@ import { auth } from '../firebase/config';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8005';
 
+if (import.meta.env.PROD) {
+  console.log('🌐 [System] Neural Path Optimized: Connected to Global Backend');
+} else {
+  console.log(`🔌 [Dev] Neural Node: ${API_BASE}`);
+}
 
 const apiClient = axios.create({ baseURL: API_BASE });
 
